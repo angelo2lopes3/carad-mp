@@ -1,0 +1,84 @@
+rules_version = '2';
+
+// ============================================================================
+// REGRAS DE SEGURANÇA DO FIRESTORE — Site Calourada
+// ============================================================================
+// Como aplicar estas regras no seu projeto Firebase:
+//   1) Console do Firebase > Firestore Database > Regras
+//   2) Cole o conteúdo deste arquivo e clique em "Publicar"
+//   (ou use a Firebase CLI: firebase deploy --only firestore:rules)
+//
+// IMPORTANTE: estas regras só funcionam com a versão do index.html que
+// guarda cada ingresso em um documento separado na coleção "tickets" e os
+// eventos dentro de calourada/content. Se você usar a versão antiga do
+// HTML (que salvava tudo em um único documento calourada/tickets), o
+// admin não vai conseguir ver a lista de ingressos e a compra pelo site
+// vai falhar — porque essas regras bloqueiam de propósito o acesso a
+// qualquer documento fora do padrão abaixo.
+//
+// Desde a integração com o Checkout Transparente do Mercado Pago, a
+// criação de ingressos pagos (Pix/Cartão) passou a ser feita pelas Cloud
+// Functions (functions/index.js), que usam o Admin SDK e por isso IGNORAM
+// estas regras — elas sempre têm permissão total, independentemente do
+// que está escrito abaixo. Por isso a criação de ingressos pelo navegador
+// deixou de ser necessária e agora é bloqueada para qualquer pessoa que
+// não seja admin, fechando ainda mais o acesso.
+//
+// Resumo do que cada regra garante:
+//   - Conteúdo do site (textos, produtos, fotos, eventos) pode ser lido por
+//     qualquer visitante, mas só pode ser ALTERADO por um admin logado.
+//   - Ingressos (nome, telefone, CPF de cada comprador) NUNCA podem ser
+//     listados/lidos por quem não está logado como admin — evitando
+//     vazamento de dados pessoais (CPF!) de todos os compradores.
+//   - Ingressos só podem ser CRIADOS por um admin logado (emissão manual
+//     no painel) ou pelas Cloud Functions do Checkout Transparente (que
+//     ignoram estas regras). Ninguém mais consegue criar, aprovar,
+//     marcar como usado ou excluir ingressos pelo navegador.
+// ============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------------------------------------------------------------------
+    // Conteúdo público do site: textos das seções, produtos da loja,
+    // fotos da galeria e lista de eventos (tudo dentro de um único
+    // documento "content", sem dados sensíveis de compradores).
+    // -------------------------------------------------------------------
+    match /calourada/content {
+      allow read: if true;                 // qualquer visitante pode ver o site
+      allow write: if request.auth != null; // só admin logado pode editar
+    }
+
+    // Bloqueia qualquer outro documento dentro de "calourada" (ex.: o
+    // antigo documento único "tickets", que não deve mais ser usado).
+    match /calourada/{docId} {
+      allow read, write: if false;
+    }
+
+    // -------------------------------------------------------------------
+    // Ingressos — cada comprador tem seu próprio documento na coleção
+    // "tickets" (nunca um documento único compartilhado por todos).
+    // -------------------------------------------------------------------
+    match /tickets/{ticketId} {
+
+      // Só admin autenticado pode LISTAR/LER ingressos — evita que
+      // qualquer pessoa no site consiga ver nome, telefone e CPF de
+      // todos os compradores.
+      allow read: if request.auth != null;
+
+      // Só admin autenticado pode criar ingressos diretamente pelo
+      // navegador (emissão manual no painel). Os pagamentos via Pix e
+      // Cartão criam o ingresso pelas Cloud Functions (Admin SDK), que
+      // ignoram esta regra — por isso não é preciso liberar create ao
+      // público aqui.
+      allow create: if request.auth != null;
+
+      // Só admin autenticado pode aprovar pagamento, marcar como usado
+      // (check-in na entrada) ou excluir ingressos manualmente. As Cloud
+      // Functions do Checkout Transparente também usam o Admin SDK e por
+      // isso conseguem atualizar o status do pagamento mesmo sem estarem
+      // "autenticadas" como admin aqui.
+      allow update, delete: if request.auth != null;
+    }
+  }
+}

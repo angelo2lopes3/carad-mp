@@ -1,0 +1,2908 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raio-X da Calourada — Radiologia</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root{
+  --film-black:#0A0D13;
+  --film-navy:#131B29;
+  --panel:#171F2E;
+  --cyan:#6FD9EC;
+  --cyan-dim:#3E7A87;
+  --bone:#F3EEE2;
+  --muted:#8B94A6;
+  --amber:#E8A23C;
+  --line:#2A3547;
+  --paper:#EDE3CC;
+  --ink:#110E0A;
+  --ink-soft:#3D362A;
+  --rule:#C2AF7C;
+  --valid:#2F6B4E;
+  --valid-bg:#E1EEE4;
+  --used:#A5362B;
+  --used-bg:#F3E2DF;
+  --gold:#AD8226;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--film-black);color:var(--bone);font-family:'Inter',sans-serif;}
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;}
+img{max-width:100%;display:block;}
+
+/* ---------------- NAV ---------------- */
+.nav{
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 28px;
+  background:rgba(10,13,19,.88);
+  backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--line);
+  flex-wrap:wrap;gap:10px;
+}
+.brand{display:flex;align-items:center;gap:10px;cursor:pointer;}
+.brand svg{width:26px;height:26px;flex-shrink:0;}
+.brand-text{font-family:'Oswald',sans-serif;font-size:18px;letter-spacing:.03em;font-weight:600;}
+.brand-text span{color:var(--cyan);}
+.nav-links{display:flex;align-items:center;gap:8px;}
+.nav-btn{
+  background:transparent;border:1px solid var(--line);color:var(--bone);
+  font-size:13px;font-weight:600;padding:8px 16px;border-radius:6px;cursor:pointer;
+  font-family:'Inter',sans-serif;
+}
+.nav-btn:hover{border-color:var(--cyan);color:var(--cyan);}
+.nav-btn.primary{background:var(--cyan);color:var(--film-black);border-color:var(--cyan);}
+.nav-btn.primary:hover{background:#8FE4F2;}
+.nav-btn.active{color:var(--cyan);border-color:var(--cyan-dim);}
+
+.view{display:none;}
+.view.active{display:block;}
+
+/* ---------------- HERO (lightbox) ---------------- */
+.hero{
+  position:relative;overflow:hidden;
+  margin:28px auto 0;max-width:1040px;
+  padding:60px 40px;
+  background:linear-gradient(180deg,var(--film-navy),var(--panel));
+  background-size:cover;background-position:center;background-repeat:no-repeat;
+  border:1px solid var(--line);border-radius:14px;
+}
+.hero-standard{
+  padding:40px;margin-bottom:0;
+  min-height:260px;
+  display:flex;flex-direction:column;justify-content:center;
+}
+@media (max-width:640px){
+  .hero-standard{min-height:200px;}
+}
+.hero::after{
+  content:'';position:absolute;left:0;right:0;height:2px;z-index:3;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+  box-shadow:0 0 12px 1px var(--cyan);
+  opacity:.7;
+  animation:scan 5s linear infinite;
+}
+.hero-eyebrow,.hero-title,.hero-sub,.hero-date{position:relative;z-index:2;}
+@keyframes scan{
+  0%{top:0;opacity:0;}
+  10%{opacity:.8;}
+  90%{opacity:.8;}
+  100%{top:100%;opacity:0;}
+}
+.hero-eyebrow{
+  font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--amber);margin:0 0 12px;
+}
+.hero-title{
+  font-family:'Oswald',sans-serif;font-weight:700;font-size:44px;line-height:1.05;
+  margin:0 0 16px;max-width:680px;letter-spacing:.01em;
+}
+.hero-sub{font-size:16px;color:var(--muted);max-width:560px;margin:0 0 20px;line-height:1.5;}
+.hero-date{
+  display:inline-block;font-family:'Space Mono',monospace;font-size:13px;
+  border:1px solid var(--cyan-dim);color:var(--cyan);padding:6px 14px;border-radius:20px;
+}
+
+/* ---------------- SECTIONS ---------------- */
+.section{max-width:1040px;margin:52px auto;padding:0 20px;}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:8px;}
+.section-title{font-family:'Oswald',sans-serif;font-size:24px;font-weight:600;margin:0;}
+.section-tag{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);}
+
+.news-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;}
+.news-card{
+  background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px;
+  position: relative;
+}
+
+.news-latest-radiology {
+  border-color: var(--cyan);
+  box-shadow: 0 0 15px rgba(111, 217, 236, 0.2);
+  animation: raioX-pulse 3s infinite ease-in-out;
+}
+.news-latest-radiology::before {
+  content: '';
+  position: absolute;
+  top: -2px; left: -2px; right: -2px; bottom: -2px;
+  border-radius: 11px;
+  border: 1px solid var(--cyan);
+  opacity: 0.8;
+  pointer-events: none;
+  animation: raioX-wave 3s infinite cubic-bezier(0.25, 0, 0, 1);
+}
+
+@keyframes raioX-pulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(111, 217, 236, 0.25); border-color: rgba(111, 217, 236, 0.6); }
+  50% { box-shadow: 0 0 25px rgba(111, 217, 236, 0.6); border-color: var(--cyan); }
+}
+@keyframes raioX-wave {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.05, 1.12); opacity: 0; }
+}
+
+.news-date{font-family:'Space Mono',monospace;font-size:11px;color:var(--cyan);margin:0 0 8px;letter-spacing:.05em;}
+.news-title{font-family:'Oswald',sans-serif;font-size:18px;margin:0 0 8px;}
+.news-body{font-size:14px;color:var(--muted);line-height:1.5;margin:0;}
+.empty-note{color:var(--muted);font-size:14px;font-family:'Space Mono',monospace;}
+
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;}
+.gallery-item{border-radius:10px;overflow:hidden;border:1px solid var(--line);background:var(--panel);}
+.gallery-item img{width:100%;height:160px;object-fit:cover;filter:saturate(.9) contrast(1.05);}
+.gallery-cap{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);padding:8px 10px;}
+
+/* ---------------- LOJA / SHOP VITRINE ---------------- */
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px;}
+.shop-card{
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;
+  display:flex;flex-direction:column;transition:transform 0.2s;
+}
+.shop-card:hover{transform:translateY(-4px);border-color:var(--cyan-dim);}
+.shop-img-box{width:100%;height:220px;background:var(--film-navy);position:relative;overflow:hidden;border-bottom:1px solid var(--line);}
+.shop-img-box img{width:100%;height:100%;object-fit:cover;}
+.shop-info{padding:20px;flex:1;display:flex;flex-direction:column;justify-content:space-between;}
+.shop-meta{margin-bottom:14px;}
+.shop-title{font-family:'Oswald',sans-serif;font-size:22px;margin:0 0 6px;color:var(--bone);}
+.shop-desc{font-size:13.5px;color:var(--muted);line-height:1.4;margin:0 0 12px;}
+.shop-price{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;color:var(--cyan);}
+.btn-buy{
+  display:block;text-align:center;background:var(--cyan);color:var(--film-black);
+  font-weight:700;padding:10px;border-radius:6px;font-size:14px;cursor:pointer;
+  transition:background 0.2s;border:none;width:100%;
+}
+.btn-buy:hover{background:#8FE4F2;}
+
+footer{text-align:center;padding:40px 20px 60px;color:var(--muted);font-size:12px;font-family:'Space Mono',monospace;}
+
+/* ---------------- LOGIN ---------------- */
+.login-wrap{max-width:380px;margin:90px auto;padding:0 20px;}
+.login-card{
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:32px;
+  position:relative;overflow:hidden;
+}
+.login-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--cyan-dim),var(--cyan),var(--cyan-dim));
+}
+.login-title{font-family:'Oswald',sans-serif;font-size:22px;margin:6px 0 4px;}
+.login-sub{font-size:13px;color:var(--muted);margin:0 0 24px;}
+.field-dark label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;}
+.field-dark input, .field-dark select{
+  width:100%;background:var(--film-navy);border:1px solid var(--line);color:var(--bone);
+  padding:11px 12px;border-radius:6px;font-family:'Space Mono',monospace;font-size:14px;margin-bottom:16px;
+}
+.field-dark input:focus, .field-dark select:focus{outline:none;border-color:var(--cyan);}
+.login-err{color:#F0897C;font-size:13px;margin:-8px 0 14px;font-family:'Space Mono',monospace;}
+.btn-cyan{
+  width:100%;background:var(--cyan);color:var(--film-black);border:none;font-weight:700;
+  padding:12px;border-radius:6px;cursor:pointer;font-size:14px;
+}
+.btn-cyan:hover{background:#8FE4F2;}
+
+/* ---------------- ADMIN ---------------- */
+.admin-wrap{max-width:1040px;margin:36px auto;padding:0 20px 60px;}
+.admin-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:10px;}
+.admin-title{font-family:'Oswald',sans-serif;font-size:26px;margin:0;}
+.saved-tag{font-size:12px;color:var(--valid);font-family:'Space Mono',monospace;margin-left:10px;opacity:0;transition:opacity .3s;}
+.saved-tag.show{opacity:1;}
+
+/* SEPARAÇÃO / SUBDIVISÃO DE SUB-PÁGINAS NO PAINEL */
+.subtabs-group{
+  display:flex;
+  gap:16px;
+  margin-bottom:26px;
+  padding-bottom:12px;
+  border-bottom:1px solid var(--line);
+  flex-wrap:wrap;
+}
+.subtab-section{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:rgba(19, 27, 41, 0.6);
+  padding:6px 10px;
+  border-radius:8px;
+  border:1px solid rgba(42, 53, 71, 0.6);
+}
+.subtab-section-label{
+  font-family:'Space Mono',monospace;
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:var(--cyan);
+  font-weight:700;
+  padding-right:4px;
+  border-right:1px solid var(--line);
+}
+.subtabs{display:flex;gap:6px;}
+.subtab-btn{
+  background:transparent;border:1px solid var(--line);color:var(--muted);
+  padding:7px 13px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;
+}
+.subtab-btn.active{border-color:var(--cyan);color:var(--cyan);background:var(--panel);}
+
+.admin-panel{display:none;}
+.admin-panel.active{display:block;}
+
+.card-dark{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:24px;margin-bottom:20px;}
+.card-dark h3{font-family:'Oswald',sans-serif;font-size:16px;margin:0 0 16px;color:var(--bone);}
+.row-flex{display:flex;gap:12px;flex-wrap:wrap;}
+.row-flex .field-dark{flex:1;min-width:180px;}
+.btn-outline{
+  background:transparent;border:1px solid var(--cyan-dim);color:var(--cyan);
+  padding:9px 16px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;
+}
+.btn-outline:hover{border-color:var(--cyan);}
+.list-manage-item{
+  display:flex;justify-content:space-between;align-items:flex-start;gap:10px;
+  padding:12px 0;border-top:1px solid var(--line);
+}
+.list-manage-item:first-child{border-top:none;}
+.lmi-text{font-size:13px;color:var(--muted);}
+.lmi-text b{color:var(--bone);display:block;font-size:14px;margin-bottom:2px;}
+.del-btn{background:none;border:none;color:#F0897C;cursor:pointer;font-size:12px;font-family:'Space Mono',monospace;}
+.thumb-row{display:flex;gap:10px;align-items:center;}
+.thumb-row img{width:52px;height:40px;object-fit:cover;border-radius:4px;border:1px solid var(--line);}
+.hero-img-preview-row{display:flex;align-items:center;gap:12px;margin:-6px 0 16px;}
+.hero-img-preview-row img{width:110px;height:64px;object-fit:cover;border-radius:6px;border:1px solid var(--line);}
+
+/* Caixa de pré-visualização e ajuste de corte interativo */
+.upload-preview-box{
+  position:relative;width:100%;max-width:420px;
+  border:2px dashed var(--cyan);border-radius:10px;overflow:hidden;
+  background:rgba(111,217,236,.05);
+  display:flex;align-items:center;justify-content:center;
+  margin:10px 0 6px;transition:border-color .2s,background .2s;
+  user-select:none;touch-action:none;
+}
+.upload-preview-box .upload-preview-hint{
+  padding:16px;text-align:center;font-family:'Space Mono',monospace;font-size:11px;
+  color:var(--muted);line-height:1.5;pointer-events:none;
+}
+.upload-preview-box img{
+  position:absolute;top:0;left:0;
+  max-width:none;max-height:none;
+  display:none;cursor:grab;
+}
+.upload-preview-box img:active{
+  cursor:grabbing;
+}
+.upload-preview-box.has-img{border-style:dashed;border-color:var(--cyan);background:var(--film-navy);}
+.upload-preview-box.has-img img{display:block;}
+.upload-preview-box.has-img .upload-preview-hint{display:none;}
+.upload-preview-remove{margin:4px 0 16px;display:inline-block;}
+
+/* Controles de Zoom para as caixas de seleção */
+.zoom-control-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  max-width: 420px;
+}
+.zoom-control-wrap label {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: var(--cyan);
+}
+.zoom-control-wrap input[type="range"] {
+  flex: 1;
+  accent-color: var(--cyan);
+}
+
+.preview-ratio-hero{aspect-ratio:4/1;}
+@media (max-width:640px){.preview-ratio-hero{aspect-ratio:2.4/1;}}
+.preview-ratio-gallery{aspect-ratio:5/4;max-width:220px;}
+.preview-ratio-shop{aspect-ratio:14/11;max-width:300px;}
+.pass-msg{font-size:12px;margin-left:10px;font-family:'Space Mono',monospace;}
+.pass-msg.ok{color:var(--valid);}
+.pass-msg.err{color:#F0897C;}
+.config-warning{
+  background:#3A1F1B;color:#F5C9BE;border-bottom:1px solid #6B342A;
+  font-family:'Space Mono',monospace;font-size:12.5px;line-height:1.5;
+  padding:12px 24px;text-align:center;
+}
+
+/* ---------------- TICKET TOOL ---------------- */
+.ticket-shell{background:var(--paper);color:var(--ink);border-radius:12px;padding:28px;}
+.ticket-shell *{box-sizing:border-box;}
+.t-eyebrow{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin:0 0 4px;}
+.t-title{font-family:'Oswald',sans-serif;font-weight:700;font-size:26px;margin:0;}
+.t-title-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px;}
+.t-count-badge{font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.04em;color:var(--ink);background:var(--paper);border:2px solid var(--ink);border-radius:20px;padding:5px 14px;font-weight:700;}
+.t-tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;}
+.t-counter-row{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+.t-counter-box{
+  flex:1;min-width:110px;background:#fff;border:2px solid var(--rule);border-radius:8px;
+  padding:12px 16px;display:flex;flex-direction:column;gap:2px;
+}
+.t-counter-box.valido{border-color:var(--valid);}
+.t-counter-box.usado{border-color:var(--used);}
+.t-counter-num{font-family:'Oswald',sans-serif;font-size:26px;font-weight:700;line-height:1;color:var(--ink);}
+.t-counter-box.valido .t-counter-num{color:var(--valid);}
+.t-counter-box.usado .t-counter-num{color:var(--used);}
+.t-counter-label{font-family:'Space Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);}
+.t-tab-btn{font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.05em;text-transform:uppercase;background:transparent;border:2px solid var(--ink);border-bottom:none;color:var(--ink);padding:9px 16px;cursor:pointer;border-radius:8px 8px 0 0;position:relative;top:2px;}
+.t-tab-btn.active{background:#fff;border-bottom:2px solid #fff;}
+.t-panel{background:#fff;border:2px solid var(--ink);border-radius:0 8px 8px 8px;padding:22px;}
+.t-panel[hidden]{display:none;}
+.t-field{margin-bottom:14px;}
+.t-field label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:6px;}
+.t-field input{width:100%;font-family:'Space Mono',monospace;font-size:14px;padding:10px 11px;border:2px solid var(--rule);border-radius:6px;background:#fff;color:var(--ink);}
+.t-field input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:var(--gold);}
+.t-btn{font-family:'Inter',sans-serif;font-weight:600;font-size:13px;border:none;border-radius:6px;padding:11px 18px;cursor:pointer;background:var(--ink);color:var(--paper);}
+.t-btn:hover{background:#3a3225;}
+.t-btn.secondary{background:transparent;color:var(--ink);border:2px solid var(--ink);}
+.t-error{color:var(--used);font-size:12px;margin:-4px 0 12px;font-family:'Space Mono',monospace;}
+.t-stub{position:relative;background:#fff;border:2px dashed var(--rule);border-radius:10px;padding:20px 26px;display:flex;gap:20px;align-items:center;box-shadow:0 6px 16px rgba(33,28,20,0.15);}
+.t-stub::before,.t-stub::after{content:'';position:absolute;top:50%;transform:translateY(-50%);width:24px;height:24px;background:var(--paper);border-radius:50%;}
+.t-stub::before{left:-14px;}.t-stub::after{right:-14px;}
+.t-stub-info{flex:1;min-width:0;}
+.t-stub-code{font-family:'Space Mono',monospace;font-size:11px;color:var(--gold);margin:0 0 6px;}
+.t-stub-name{font-family:'Oswald',sans-serif;font-size:21px;margin:0 0 4px;line-height:1.1;word-break:break-word;color:var(--ink);}
+.t-stub-phone{font-family:'Space Mono',monospace;font-size:13px;color:var(--ink-soft);margin:0 0 10px;}
+.t-pill{display:inline-block;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:20px;font-weight:700;}
+.t-pill.valido{background:var(--valid-bg);color:var(--valid);}
+.t-pill.usado{background:var(--used-bg);color:var(--used);}
+.t-pill.pendente{background:#FEF3C7;color:#92400E;}
+.t-stamp{position:absolute;top:8px;right:20px;font-family:'Oswald',sans-serif;font-size:19px;color:var(--used);border:3px solid var(--used);border-radius:8px;padding:2px 9px;transform:rotate(8deg);opacity:.85;}
+.t-search-row{display:flex;gap:10px;margin-bottom:16px;}
+.t-search-row input{flex:1;}
+.t-ledger{border:1px solid var(--rule);border-radius:8px;overflow:hidden;}
+.t-ledger-head,.t-ledger-row{display:grid;grid-template-columns:24px 34px 1.2fr 1fr .9fr .9fr .9fr 90px;gap:10px;align-items:center;padding:9px 12px;}
+.t-ledger-head{background:var(--ink);color:var(--paper);font-family:'Space Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.05em;}
+.t-ledger-row{background:#fff;font-family:'Space Mono',monospace;font-size:12px;border-top:1px solid var(--rule);}
+.t-ledger-row:nth-child(even){background:#F7F2E4;}
+.t-qr-mini{line-height:0;cursor:pointer;}
+.t-ledger-name{font-family:'Inter',sans-serif;font-weight:600;font-size:12.5px;color:var(--ink);}
+.t-empty{padding:28px 16px;text-align:center;color:var(--ink-soft);font-size:13px;}
+.t-reset{margin-top:16px;font-size:12px;color:var(--ink-soft);background:none;border:none;text-decoration:underline;cursor:pointer;padding:0;}
+.t-verify-row{display:flex;gap:10px;}
+.t-verify-row input{flex:1;}
+.t-cam-box{margin-top:12px;border:2px dashed var(--rule);border-radius:8px;padding:12px;text-align:center;}
+.t-cam-box video{width:100%;max-width:320px;border-radius:6px;}
+.t-cam-status{font-size:11px;color:var(--ink-soft);margin-top:8px;font-family:'Space Mono',monospace;}
+.t-result-box{border:2px solid var(--rule);border-radius:10px;padding:18px 20px;}
+.t-result-box.t-result-ok{border-color:var(--valid);background:var(--valid-bg);}
+.t-result-box.t-result-used{border-color:var(--used);background:var(--used-bg);}
+.t-result-box.t-result-invalid{border-color:var(--used);background:var(--used-bg);}
+.t-result-title{font-family:'Oswald',sans-serif;font-size:18px;font-weight:600;margin:0 0 10px;}
+.t-result-sub{font-size:13px;color:var(--ink-soft);margin:0;}
+.t-shared-note{font-size:11px;color:var(--ink-soft);margin-top:18px;border-top:1px solid var(--rule);padding-top:12px;}
+
+/* ---------------- COMPROVANTE EXTRACTION UI ---------------- */
+.ocr-data-card{background:#FAF7F0;border:1px solid var(--rule);border-radius:8px;padding:14px;margin-top:14px;font-family:'Space Mono',monospace;font-size:12px;}
+.ocr-data-card h4{margin:0 0 8px;font-family:'Oswald',sans-serif;font-size:15px;color:var(--ink);}
+.ocr-field-item{margin-bottom:4px;}
+.ocr-field-item span{color:var(--gold);font-weight:700;}
+
+/* ---------------- EVENTOS ---------------- */
+.t-select{width:100%;font-family:'Space Mono',monospace;font-size:14px;padding:10px 11px;border:2px solid var(--rule);border-radius:6px;background:#fff;color:var(--ink);}
+.t-select:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:var(--gold);}
+.t-hint{font-size:12px;color:var(--ink-soft);margin:-6px 0 12px;}
+.t-hint.warn{color:var(--used);font-weight:600;}
+.lmi-actions{display:flex;gap:12px;flex-shrink:0;}
+.edit-btn{background:none;border:none;color:var(--gold);cursor:pointer;font-size:12px;font-family:'Space Mono',monospace;}
+.evt-form-title{font-family:'Oswald',sans-serif;font-size:15px;margin:0 0 12px;color:var(--ink-soft);}
+.evt-editing-tag{display:inline-block;background:var(--gold);color:#fff;font-size:10px;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.05em;padding:3px 9px;border-radius:20px;margin-bottom:12px;}
+
+.t-evt-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+.t-evt-chip{
+  font-family:'Space Mono',monospace;font-size:12px;font-weight:600;background:#fff;
+  border:2px solid var(--rule);color:var(--ink-soft);padding:7px 14px;border-radius:20px;cursor:pointer;
+}
+.t-evt-chip.active{border-color:var(--ink);color:var(--ink);background:var(--paper);}
+.t-pill.evento{background:#F1E7CE;color:var(--ink-soft);}
+.t-stub-event{font-family:'Space Mono',monospace;font-size:11px;color:var(--ink-soft);margin:0 0 6px;text-transform:uppercase;letter-spacing:.04em;}
+
+.t-bulkbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+.t-bulk-left{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink-soft);font-family:'Space Mono',monospace;}
+.t-bulk-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.t-btn.danger{background:var(--used);color:#fff;}
+.t-btn.danger:hover{background:#8a2c22;}
+.t-btn:disabled{opacity:.45;cursor:not-allowed;}
+.t-check{width:16px;height:16px;cursor:pointer;accent-color:var(--ink);}
+.t-del-icon{background:none;border:none;color:var(--used);cursor:pointer;font-size:15px;padding:2px;line-height:1;}
+.t-pdf-icon{background:none;border:none;color:var(--cyan-dim,#3E7A87);cursor:pointer;font-size:15px;padding:2px;line-height:1;}
+.t-pdf-icon:hover{color:var(--gold);}
+.t-stub-actions{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;}
+.btn-baixar-pdf{font-family:'Inter',sans-serif;font-weight:600;font-size:13px;border:none;border-radius:6px;padding:10px 16px;cursor:pointer;background:var(--gold);color:#fff;}
+.btn-baixar-pdf:hover{background:#8f6a1e;}
+
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(10,13,19,.72);z-index:200;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.modal-overlay[hidden]{display:none;}
+.modal-box{
+  background:var(--paper);color:var(--ink);border-radius:12px;padding:26px 26px 22px;
+  max-width:400px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.4);
+}
+.modal-title{font-family:'Oswald',sans-serif;font-size:19px;margin:0 0 10px;}
+.modal-msg{font-size:13.5px;color:var(--ink-soft);line-height:1.5;margin:0 0 22px;}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;}
+
+/* ---------------- POPUP COMPRA DA LOJA ---------------- */
+.buy-modal-overlay{
+  position:fixed;inset:0;background:rgba(10,13,19,.82);z-index:300;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+  backdrop-filter:blur(4px);
+}
+.buy-modal-overlay[hidden]{display:none;}
+.buy-modal-box{
+  background:var(--panel);color:var(--bone);border:1px solid var(--line);
+  border-radius:12px;padding:24px;max-width:440px;width:100%;
+  box-shadow:0 20px 50px rgba(0,0,0,.6);max-height:90vh;overflow-y:auto;
+}
+.buy-modal-title{font-family:'Oswald',sans-serif;font-size:22px;margin:0 0 4px;color:var(--cyan);}
+.buy-modal-sub{font-size:13px;color:var(--muted);margin:0 0 18px;}
+.buy-options{display:flex;gap:10px;margin-bottom:18px;}
+.buy-opt-btn{
+  flex:1;padding:12px;border:1px solid var(--line);border-radius:8px;
+  background:var(--film-navy);color:var(--bone);font-weight:600;font-size:13px;
+  cursor:pointer;text-align:center;transition:all 0.2s;
+}
+.buy-opt-btn:hover{border-color:var(--cyan);color:var(--cyan);}
+.buy-opt-btn.active{border-color:var(--cyan);background:rgba(111,217,236,0.1);color:var(--cyan);}
+.buy-method-sec{display:none;}
+.buy-method-sec.active{display:block;}
+.qr-display-box{text-align:center;background:#fff;padding:16px;border-radius:8px;margin-bottom:16px;}
+.qr-display-box img{max-width:200px;margin:0 auto;border-radius:4px;}
+
+/* ---------------- REGULAMENTO ---------------- */
+.rules-wrap{
+  position:relative;
+  background:linear-gradient(180deg,var(--film-navy),var(--panel));
+  border:1px solid var(--line);border-radius:14px;
+  padding:44px 36px 36px;
+  overflow:hidden;
+}
+.rules-wrap::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background-image:repeating-linear-gradient(0deg,rgba(111,217,236,.035) 0px,rgba(111,217,236,.035) 1px,transparent 1px,transparent 26px);
+  opacity:.6;
+}
+.rules-intro{position:relative;z-index:1;max-width:620px;margin:0 0 30px;}
+.rules-eyebrow{
+  font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--amber);margin:0 0 10px;
+}
+.rules-lede{color:var(--muted);font-size:14.5px;line-height:1.6;margin:0;}
+
+.rules-grid{position:relative;z-index:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;}
+.rule-card{
+  background:rgba(23,31,46,.75);border:1px solid var(--line);border-radius:10px;
+  padding:20px 20px 18px;position:relative;
+  transition:border-color .2s,transform .2s;
+}
+.rule-card:hover{border-color:var(--cyan-dim);transform:translateY(-2px);}
+.rule-num{
+  font-family:'Space Mono',monospace;font-size:11px;color:var(--film-black);
+  background:var(--cyan);display:inline-flex;align-items:center;justify-content:center;
+  width:22px;height:22px;border-radius:50%;font-weight:700;margin-right:10px;
+}
+.rule-head{display:flex;align-items:center;gap:2px;margin-bottom:12px;}
+.rule-icon{font-size:17px;line-height:1;margin-right:8px;}
+.rule-title{font-family:'Oswald',sans-serif;font-size:15.5px;font-weight:600;color:var(--bone);margin:0;letter-spacing:.01em;}
+.rule-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;}
+.rule-list li{
+  font-size:13px;line-height:1.55;color:var(--muted);padding-left:14px;position:relative;
+}
+.rule-list li::before{
+  content:'';position:absolute;left:0;top:7px;width:5px;height:5px;border-radius:50%;
+  background:var(--cyan-dim);
+}
+.rule-list b{color:var(--bone);font-weight:600;}
+
+.rule-card.warn{border-color:rgba(165,54,43,.5);background:rgba(165,54,43,.08);}
+.rule-card.warn .rule-num{background:var(--used);color:#fff;}
+.rule-card.warn .rule-list li::before{background:var(--used);}
+
+.rules-banner{
+  position:relative;z-index:1;margin-top:22px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  background:rgba(232,162,60,.08);border:1px solid rgba(232,162,60,.4);
+  border-radius:10px;padding:14px 18px;
+}
+.rules-banner-icon{font-size:20px;}
+.rules-banner p{margin:0;font-size:13px;color:var(--bone);line-height:1.5;}
+.rules-banner b{color:var(--amber);}
+
+/* ---------------- POP-UP REGRAS ---------------- */
+.rules-modal-overlay{
+  position:fixed;inset:0;z-index:1000;
+  background:rgba(6,8,12,.82);
+  display:flex;align-items:center;justify-content:center;
+  padding:24px;
+  backdrop-filter:blur(3px);
+}
+.rules-modal-overlay[hidden]{display:none;}
+.rules-modal{
+  width:100%;max-width:780px;max-height:88vh;
+  background:var(--film-navy);border:1px solid var(--line);border-radius:14px;
+  display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+}
+.rules-modal-head{padding:26px 26px 6px;flex-shrink:0;}
+.rules-modal-title{font-family:'Oswald',sans-serif;font-size:22px;font-weight:600;margin:4px 0 10px;color:var(--bone);}
+.rules-modal-body{padding:6px 26px 22px;overflow-y:auto;}
+.rules-modal-foot{
+  padding:16px 26px;border-top:1px solid var(--line);flex-shrink:0;
+  display:flex;justify-content:flex-end;background:var(--panel);
+}
+.rules-modal-foot .nav-btn.primary{padding:10px 22px;font-size:14px;}
+.rules-modal-body::-webkit-scrollbar{width:8px;}
+.rules-modal-body::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px;}
+
+@media (max-width:640px){
+  .hero-title{font-size:32px;}
+  .t-ledger-head,.t-ledger-row{grid-template-columns:22px 30px 1fr 1fr 70px;}
+  .t-col-hide{display:none;}
+  .rules-wrap{padding:32px 20px 26px;}
+  .rules-modal{max-height:92vh;}
+  .rules-modal-head{padding:20px 18px 4px;}
+  .rules-modal-body{padding:4px 18px 18px;}
+  .rules-modal-foot{padding:14px 18px;}
+}
+</style>
+</head>
+<body>
+
+<div class="rules-modal-overlay" id="rulesModalOverlay" hidden>
+  <div class="rules-modal">
+    <div class="rules-modal-head">
+      <p class="rules-eyebrow">📜 Regulamento da Calourada</p>
+      <h2 class="rules-modal-title">Antes de continuar, leia o regulamento</h2>
+      <p class="rules-lede">Para garantir uma festa segura, divertida e acolhedora para todos, pedimos que todos os presentes leiam e sigam as regras abaixo antes de acessar o site.</p>
+    </div>
+
+    <div class="rules-modal-body">
+      <div class="rules-grid">
+
+        <div class="rule-card warn">
+          <div class="rule-head"><span class="rule-num">1</span><span class="rule-icon">🤝</span><h3 class="rule-title">Respeito e Convivência — Tolerância Zero</h3></div>
+          <ul class="rule-list">
+            <li><b>Respeito mútuo:</b> não será tolerado nenhum tipo de assédio, discriminação, preconceito (machismo, racismo, LGBTfobia etc.) ou agressão física/verbal.</li>
+            <li><b>Consentimento é tudo:</b> "não é não". Qualquer atitude desrespeitosa resulta em expulsão imediata, sem reembolso, e nas medidas administrativas cabíveis.</li>
+            <li><b>Trote consciente:</b> deve ser 100% voluntário e integrativo. É proibido forçar calouros(as) a brincadeiras constrangedoras ou a ingerir álcool/substâncias contra a vontade.</li>
+          </ul>
+        </div>
+
+        <div class="rule-card">
+          <div class="rule-head"><span class="rule-num">2</span><span class="rule-icon">🪪</span><h3 class="rule-title">Acesso e Identificação</h3></div>
+          <ul class="rule-list">
+            <li><b>Documentação:</b> entrada permitida somente com documento oficial com foto (RG, CNH ou Passaporte) e ingresso.</li>
+            <li><b>Classificação indicativa:</b> evento para maiores de 18 anos.</li>
+          </ul>
+        </div>
+
+        <div class="rule-card warn">
+          <div class="rule-head"><span class="rule-num">3</span><span class="rule-icon">🚫</span><h3 class="rule-title">Segurança e Itens Proibidos</h3></div>
+          <ul class="rule-list">
+            <li>Armas de fogo, objetos cortantes, perfurantes ou de vidro (garrafas, copos de vidro).</li>
+            <li>Substâncias ilícitas de qualquer natureza.</li>
+            <li>Fogos de artifício ou artefatos pirotécnicos.</li>
+            <li>Alimentos e bebidas comprados fora do evento (salvo restrição alimentar avisada à comissão).</li>
+          </ul>
+        </div>
+
+        <div class="rule-card">
+          <div class="rule-head"><span class="rule-num">4</span><span class="rule-icon">💧</span><h3 class="rule-title">Bebidas e Consumo Responsável</h3></div>
+          <ul class="rule-list">
+            <li><b>Água grátis:</b> ponto de hidratação disponível gratuitamente durante todo o evento.</li>
+            <li><b>Mantenha-se hidratado:</b> beba com moderação e intercale álcool com água e alimentação.</li>
+            <li><b>Se beber, não dirija!</b></li>
+          </ul>
+        </div>
+
+        <div class="rule-card">
+          <div class="rule-head"><span class="rule-num">5</span><span class="rule-icon">♻️</span><h3 class="rule-title">Cuidados com o Espaço e Estrutura</h3></div>
+          <ul class="rule-list">
+            <li><b>Sustentabilidade:</b> descarte o lixo nas lixeiras indicadas e ajude a manter o local limpo.</li>
+            <li><b>Patrimônio:</b> danos ao local ou aos equipamentos da organização são de responsabilidade financeira do infrator.</li>
+          </ul>
+        </div>
+
+        <div class="rule-card">
+          <div class="rule-head"><span class="rule-num">6</span><span class="rule-icon">🆘</span><h3 class="rule-title">Comissão e Apoio</h3></div>
+          <ul class="rule-list">
+            <li><b>Ponto de apoio/acolhimento:</b> se sentir mal, enjoado(a) ou presenciar alguma situação inadequada, procure imediatamente um membro da comissão organizadora ou a equipe de segurança.</li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="rules-banner">
+        <span class="rules-banner-icon">⚠️</span>
+        <p>Ao entrar no evento, você declara estar <b>ciente e de acordo</b> com todas as regras deste regulamento.</p>
+      </div>
+    </div>
+
+    <div class="rules-modal-foot">
+      <button class="nav-btn primary" id="btnAceitarRegras">Li e aceito as regras</button>
+    </div>
+  </div>
+</div>
+
+<nav class="nav">
+  <div class="brand" id="brandHome">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#6FD9EC" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/><circle cx="17" cy="16" r="1.4" fill="#6FD9EC" stroke="none"/></svg>
+    <div class="brand-text">RAIO-X <span>DA CALOURADA</span></div>
+  </div>
+  <div class="nav-links">
+    <button class="nav-btn" data-nav="home">Início</button>
+    <button class="nav-btn" data-nav="loja">Loja</button>
+    <button class="nav-btn" data-nav="regras">Regras</button>
+    <button class="nav-btn" id="navLoginBtn" data-nav="login">Entrar</button>
+    <button class="nav-btn" id="navAdminBtn" data-nav="admin" hidden>Painel</button>
+    <button class="nav-btn" id="navLogoutBtn" hidden>Sair</button>
+  </div>
+</nav>
+
+<div id="configWarning" class="config-warning" hidden></div>
+
+<div class="view active" id="view-home">
+  <div class="hero">
+    <p class="hero-eyebrow">Curso de Radiologia &middot; Recepção de calouros</p>
+    <h1 class="hero-title" id="heroTitleOut">Carregando...</h1>
+    <p class="hero-sub" id="heroSubOut"></p>
+    <span class="hero-date" id="heroDateOut"></span>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2 class="section-title">Novidades & divulgações</h2>
+      <span class="section-tag">Laudo atualizado</span>
+    </div>
+    <div class="news-grid" id="newsGrid"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2 class="section-title">Galeria</h2>
+      <span class="section-tag">Chapas reveladas</span>
+    </div>
+    <div class="gallery-grid" id="galleryGrid"></div>
+  </div>
+
+  <footer>Página oficial mantida pelo CARAD &middot; Centro Acadêmico de Radiologia Uninassau</footer>
+</div>
+
+<div class="view" id="view-regras">
+  <div class="hero hero-standard" id="rulesHeroEl">
+    <p class="hero-eyebrow" id="rulesHeroEyebrowOut">Curso de Radiologia &middot; Recepção de calouros</p>
+    <h1 class="hero-title" id="rulesHeroTitleOut" style="font-size: 34px; margin: 0;">Regulamento Geral</h1>
+    <p class="hero-sub" id="rulesHeroSubOut" style="margin: 8px 0 0;">Leitura obrigatória para todos os participantes do evento.</p>
+  </div>
+
+  <div class="section">
+    <div class="rules-wrap">
+      <div class="rules-intro">
+        <p class="rules-eyebrow">📜 Regulamento da Calourada</p>
+        <p class="rules-lede">Para garantir uma festa segura, divertida e acolhedora para todos, pedimos que todos os presentes leiam e sigam as regras abaixo.</p>
+      </div>
+
+      <div class="rules-grid">
+
+        <div class="rule-card warn">
+          <div class="rule-head"><span class="rule-num">1</span><span class="rule-icon">🤝</span><h3 class="rule-title">Respeito e Convivência — Tolerância Zero</h3></div>
+          <ul class="rule-list">
+            <li><b>Respeito mútuo:</b> não será tolerado nenhum tipo de assédio, discriminação, preconceito (machismo, racismo, LGBTfobia etc.) ou agressão física/verbal.</li>
+            <li><b>Consentimento é tudo:</b> "não é não". Qualquer atitude desrespeitosa resulta em expulsão imediata, sem reembolso, e nas medidas administrativas cabíveis.</li>
+            <li><b>Trote consciente:</b> deve ser 100% voluntário e integrativo. É proibido forçar calouros(as) a brincadeiras constrangedoras ou a ingerir álcool/substâncias contra a vontade.</li>
+          </ul>
+        </div>
+
+        <div class="rule-card">
+          <div class="rule-head"><span class="rule-num">2</span><span class="rule-icon">🪪</span><h3 class="rule-title">Acesso e Identificação</h3></div>
+          <ul class="rule-list">
+            <li><b>Documentação:</b> entrada permitida somente com documento oficial com foto (RG, CNH ou Passaporte) e ingresso.</li>
+            <li><b>Classificação indicativa:</b> evento para maiores de 18 anos.</li>
+          </ul>
+        </div>
+
+        <div class="rule-card warn">
+          <div class="rule-head"><span class="rule-num">3</span><span class="rule-icon">🚫</span><h3 class="rule-title">Segurança e Itens Proibidos</h3></div>
+          <ul class="rule-list">
+            <li>Armas de fogo, objetos cortantes, perfurantes ou de vidro (garrafas, copos de vidro).</li>
+            <li>Substâncias ilícitas de qualquer natureza.</li>
+            <li>Fogos de artifício ou artefatos pirotécnicos.</li>
+            <li>Alimentos e bebidas comprados fora do evento (salvo restrição alimentar avisada à comissão).</li>
+          </ul>
+        </div>
+
+        <div class="rule-card">
+          <div class="rule-head"><span class="rule-num">4</span><span class="rule-icon">💧</span><h3 class="rule-title">Bebidas e Consumo Responsável</h3></div>
+          <ul class="rule-list">
+            <li><b>Água grátis:</b> ponto de hidratação disponível gratuitamente durante todo o evento.</li>
+            <li><b>Mantenha-se hidratado:</b> beba com moderação e intercale álcool com água e alimentação.</li>
+            <li><b>Se beber, não dirija!</b></li>
+          </ul>
+        </div>
+
+        <div class="rule-card">
+          <div class="rule-head"><span class="rule-num">5</span><span class="rule-icon">♻️</span><h3 class="rule-title">Cuidados com o Espaço e Estrutura</h3></div>
+          <ul class="rule-list">
+            <li><b>Sustentabilidade:</b> descarte o lixo nas lixeiras indicadas e ajude a manter o local limpo.</li>
+            <li><b>Patrimônio:</b> danos ao local ou aos equipamentos da organização são de responsabilidade financeira do infrator.</li>
+          </ul>
+        </div>
+
+        <div class="rule-card">
+          <div class="rule-head"><span class="rule-num">6</span><span class="rule-icon">🆘</span><h3 class="rule-title">Comissão e Apoio</h3></div>
+          <ul class="rule-list">
+            <li><b>Ponto de apoio/acolhimento:</b> se sentir mal, enjoado(a) ou presenciar alguma situação inadequada, procure imediatamente um membro da comissão organizadora ou a equipe de segurança.</li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="rules-banner">
+        <span class="rules-banner-icon">⚠️</span>
+        <p>Ao entrar no evento, você declara estar <b>ciente e de acordo</b> com todas as regras deste regulamento.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>Página oficial mantida pelo CARAD &middot; Centro Acadêmico de Radiologia Uninassau</footer>
+</div>
+
+<div class="view" id="view-loja">
+  <div class="hero hero-standard" id="shopHeroEl">
+    <p class="hero-eyebrow" id="shopHeroEyebrowOut">Produtos Oficiais</p>
+    <h1 class="hero-title" id="shopHeroTitleOut" style="font-size: 34px; margin: 0;">Vitrine da Calourada</h1>
+    <p class="hero-sub" id="shopHeroSubOut" style="margin: 8px 0 0;">Adquira os produtos oficiais do evento diretamente com a nossa comissão.</p>
+  </div>
+  
+  <div class="section">
+    <div class="shop-grid" id="shopGrid"></div>
+  </div>
+  <footer>Página oficial mantida pelo CARAD &middot; Centro Acadêmico de Radiologia Uninassau</footer>
+</div>
+
+<div class="view" id="view-login">
+  <div class="login-wrap">
+    <div class="login-card">
+      <p class="hero-eyebrow" style="margin-bottom:2px;">Acesso restrito</p>
+      <h2 class="login-title">Área da comissão</h2>
+      <p class="login-sub">Entre com o e-mail e a senha da sua conta da comissão para editar o site e gerenciar os ingressos.</p>
+      <div class="field-dark">
+        <label for="loginEmail">E-mail</label>
+        <input type="email" id="loginEmail" placeholder="voce@exemplo.com" autocomplete="username">
+      </div>
+      <div class="field-dark">
+        <label for="loginPass">Senha</label>
+        <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div class="login-err" id="loginErr" hidden></div>
+      <button class="btn-cyan" id="btnLogin">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="view" id="view-admin">
+  <div class="admin-wrap">
+    <div class="admin-head">
+      <h2 class="admin-title">Painel da comissão</h2>
+      <span class="saved-tag" id="savedTag">Alterações salvas</span>
+    </div>
+
+    <!-- SEPARAÇÃO ORGANIZADA DAS SUB-PÁGINAS NO PAINEL -->
+    <div class="subtabs-group">
+      <div class="subtab-section">
+        <span class="subtab-section-label">Conteúdo do Site</span>
+        <div class="subtabs">
+          <button class="subtab-btn active" data-subtab="conteudo">Página Inicial</button>
+          <button class="subtab-btn" data-subtab="loja">Loja</button>
+          <button class="subtab-btn" data-subtab="regras">Regras</button>
+        </div>
+      </div>
+      <div class="subtab-section">
+        <span class="subtab-section-label">Gestão</span>
+        <div class="subtabs">
+          <button class="subtab-btn" data-subtab="ingressos">Ingressos</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-panel active" id="admin-conteudo">
+      <div class="card-dark">
+        <h3>Cabeçalho (hero) - Página Inicial</h3>
+        <div class="field-dark"><label for="edHeroTitle">Título</label><input id="edHeroTitle" type="text"></div>
+        <div class="field-dark"><label for="edHeroSub">Subtítulo</label><input id="edHeroSub" type="text"></div>
+        <div class="field-dark"><label for="edHeroDate">Data / selo</label><input id="edHeroDate" type="text"></div>
+        <div class="field-dark"><label for="edHeroImgUrl">Imagem de capa (URL)</label><input id="edHeroImgUrl" type="text" placeholder="https://..."></div>
+        <div class="field-dark">
+          <label for="edHeroImgFile">ou envie uma imagem do dispositivo</label>
+          <input id="edHeroImgFile" type="file" accept="image/*">
+        </div>
+        <div class="upload-preview-box preview-ratio-hero" id="heroImgPreviewBox">
+          <div class="upload-preview-hint">Arraste a imagem para enquadrar como será exibida no site.</div>
+          <img id="heroImgPreview" alt="Pré-visualização da capa">
+        </div>
+        <div class="zoom-control-wrap" id="heroZoomWrap" hidden>
+          <label for="heroZoomRange">Zoom:</label>
+          <input type="range" id="heroZoomRange" min="1" max="3" step="0.05" value="1">
+        </div>
+        <button class="del-btn upload-preview-remove" id="btnRemoveHeroImg" type="button" hidden>Remover imagem</button>
+        <button class="btn-outline" id="btnSaveHero" style="margin-top:6px;">Salvar cabeçalho</button>
+      </div>
+
+      <div class="card-dark">
+        <h3>Novidades</h3>
+        <div class="row-flex">
+          <div class="field-dark"><label for="newTitle">Título</label><input id="newTitle" type="text" placeholder="Ex: Camisa da turma chegou"></div>
+          <div class="field-dark"><label for="newDate">Data</label><input id="newDate" type="text" placeholder="Ex: 12/07"></div>
+        </div>
+        <div class="field-dark"><label for="newBody">Texto</label><input id="newBody" type="text" placeholder="Detalhes do comunicado"></div>
+        <button class="btn-outline" id="btnAddNews">Publicar novidade</button>
+        <div id="newsManageList" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="card-dark">
+        <h3>Galeria de fotos</h3>
+        <div class="row-flex">
+          <div class="field-dark"><label for="newPhotoUrl">URL da imagem</label><input id="newPhotoUrl" type="text" placeholder="https://..."></div>
+          <div class="field-dark"><label for="newPhotoCap">Legenda</label><input id="newPhotoCap" type="text" placeholder="Ex: Aula inaugural"></div>
+        </div>
+        <div class="field-dark">
+          <label for="newPhotoFile">ou envie uma foto do dispositivo</label>
+          <input id="newPhotoFile" type="file" accept="image/*">
+        </div>
+        <div class="upload-preview-box preview-ratio-gallery" id="galleryImgPreviewBox">
+          <div class="upload-preview-hint">Arraste a imagem para enquadrar como será exibida na galeria.</div>
+          <img id="galleryImgPreview" alt="Pré-visualização da foto">
+        </div>
+        <div class="zoom-control-wrap" id="galleryZoomWrap" hidden>
+          <label for="galleryZoomRange">Zoom:</label>
+          <input type="range" id="galleryZoomRange" min="1" max="3" step="0.05" value="1">
+        </div>
+        <button class="del-btn upload-preview-remove" id="btnRemoveGalleryImg" type="button" hidden>Remover imagem</button>
+        <button class="btn-outline" id="btnAddPhoto">Adicionar foto</button>
+        <div id="photoManageList" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="card-dark">
+        <h3>Sua conta</h3>
+        <p class="lmi-text" id="accountEmailOut" style="margin-bottom:14px;"></p>
+        <div class="field-dark"><label for="edMyPassword">Nova senha (só para sua conta)</label><input id="edMyPassword" type="password" placeholder="Mínimo de 6 caracteres" autocomplete="new-password"></div>
+        <button class="btn-outline" id="btnSaveMyPass">Atualizar minha senha</button>
+        <span class="pass-msg" id="passMsg"></span>
+      </div>
+    </div>
+
+    <div class="admin-panel" id="admin-loja">
+      <div class="card-dark">
+        <h3>Cabeçalho (hero) - Página de Loja</h3>
+        <div class="field-dark"><label for="edShopHeroTitle">Título da Loja</label><input id="edShopHeroTitle" type="text"></div>
+        <div class="field-dark"><label for="edShopHeroSub">Subtítulo da Loja</label><input id="edShopHeroSub" type="text"></div>
+        <div class="field-dark"><label for="edShopHeroImgUrl">Imagem de capa da Loja (URL)</label><input id="edShopHeroImgUrl" type="text" placeholder="https://..."></div>
+        <div class="field-dark">
+          <label for="edShopHeroImgFile">ou envie uma imagem de capa do dispositivo</label>
+          <input id="edShopHeroImgFile" type="file" accept="image/*">
+        </div>
+        <div class="upload-preview-box preview-ratio-hero" id="shopHeroImgPreviewBox">
+          <div class="upload-preview-hint">Arraste a imagem para enquadrar como será exibida na loja.</div>
+          <img id="shopHeroImgPreview" alt="Pré-visualização da capa da loja">
+        </div>
+        <div class="zoom-control-wrap" id="shopHeroZoomWrap" hidden>
+          <label for="shopHeroZoomRange">Zoom:</label>
+          <input type="range" id="shopHeroZoomRange" min="1" max="3" step="0.05" value="1">
+        </div>
+        <button class="del-btn upload-preview-remove" id="btnRemoveShopHeroImg" type="button" hidden>Remover imagem</button>
+        <button class="btn-outline" id="btnSaveShopHero" style="margin-top:6px;">Salvar cabeçalho da loja</button>
+      </div>
+
+      <div class="card-dark">
+        <h3>Cadastrar Novo Item na Loja</h3>
+        <div class="row-flex">
+          <div class="field-dark"><label for="shopItemTitle">Nome do Produto</label><input id="shopItemTitle" type="text" placeholder="Ex: Tirante Radiologia"></div>
+          <div class="field-dark"><label for="shopItemPrice">Preço (R$)</label><input id="shopItemPrice" type="text" placeholder="Ex: R$ 15,00"></div>
+        </div>
+        <div class="field-dark"><label for="shopItemDesc">Descrição</label><input id="shopItemDesc" type="text" placeholder="Ex: Tirante em nylon com engate rápido de 40cm"></div>
+        
+        <div class="field-dark">
+          <label for="shopItemIsTicket">Tipo do Item</label>
+          <select id="shopItemIsTicket">
+            <option value="false">Produto Geral</option>
+            <option value="true">Ingresso de Evento</option>
+          </select>
+        </div>
+
+        <div class="field-dark" id="shopEventSelectWrap" hidden>
+          <label for="shopItemEventId">Evento Vinculado</label>
+          <select id="shopItemEventId"></select>
+        </div>
+
+        <div class="field-dark"><label for="shopItemImgUrl">URL da Imagem do Produto</label><input id="shopItemImgUrl" type="text" placeholder="https://..."></div>
+        <div class="field-dark">
+          <label for="shopItemImgFile">ou envie uma foto do dispositivo</label>
+          <input id="shopItemImgFile" type="file" accept="image/*">
+        </div>
+        <div class="upload-preview-box preview-ratio-shop" id="shopItemImgPreviewBox">
+          <div class="upload-preview-hint">Arraste a imagem para enquadrar como será exibida no cartão do produto.</div>
+          <img id="shopItemImgPreview" alt="Pré-visualização do produto">
+        </div>
+        <div class="zoom-control-wrap" id="shopItemZoomWrap" hidden>
+          <label for="shopItemZoomRange">Zoom:</label>
+          <input type="range" id="shopItemZoomRange" min="1" max="3" step="0.05" value="1">
+        </div>
+        <button class="del-btn upload-preview-remove" id="btnRemoveShopItemImg" type="button" hidden>Remover imagem</button>
+        
+        <div class="field-dark"><label for="shopItemQrImgFile">Imagem do QR Code de Pagamento</label><input id="shopItemQrImgFile" type="file" accept="image/*"></div>
+        
+        <div class="field-dark"><label for="shopItemLink">Link do WhatsApp da comissão</label><input id="shopItemLink" type="text" placeholder="https://wa.me/..."></div>
+        <button class="btn-outline" id="btnAddShopItem">Cadastrar Item</button>
+        
+        <h3 style="margin-top:30px; border-top:1px solid var(--line); padding-top:20px;">Produtos Cadastrados</h3>
+        <div id="shopManageList"></div>
+      </div>
+    </div>
+
+    <!-- NOVA SUB-PÁGINA: EDIÇÃO E UPLOAD PARA "REGRAS" -->
+    <div class="admin-panel" id="admin-regras">
+      <div class="card-dark">
+        <h3>Cabeçalho (hero) - Página de Regras</h3>
+        <div class="field-dark"><label for="edRulesHeroTitle">Título da Página de Regras</label><input id="edRulesHeroTitle" type="text"></div>
+        <div class="field-dark"><label for="edRulesHeroSub">Subtítulo da Página de Regras</label><input id="edRulesHeroSub" type="text"></div>
+        <div class="field-dark"><label for="edRulesHeroImgUrl">Imagem de Capa (URL)</label><input id="edRulesHeroImgUrl" type="text" placeholder="https://..."></div>
+        <div class="field-dark">
+          <label for="edRulesHeroImgFile">ou envie uma imagem de capa do dispositivo</label>
+          <input id="edRulesHeroImgFile" type="file" accept="image/*">
+        </div>
+        <div class="upload-preview-box preview-ratio-hero" id="rulesHeroImgPreviewBox">
+          <div class="upload-preview-hint">Arraste a imagem para enquadrar como será exibida na página de regras.</div>
+          <img id="rulesHeroImgPreview" alt="Pré-visualização da capa das regras">
+        </div>
+        <div class="zoom-control-wrap" id="rulesHeroZoomWrap" hidden>
+          <label for="rulesHeroZoomRange">Zoom:</label>
+          <input type="range" id="rulesHeroZoomRange" min="1" max="3" step="0.05" value="1">
+        </div>
+        <button class="del-btn upload-preview-remove" id="btnRemoveRulesHeroImg" type="button" hidden>Remover imagem</button>
+        <button class="btn-outline" id="btnSaveRulesHero" style="margin-top:6px;">Salvar cabeçalho de regras</button>
+      </div>
+    </div>
+
+    <div class="admin-panel" id="admin-ingressos">
+      <div class="ticket-shell">
+        <p class="t-eyebrow">Bilheteria &middot; sistema de emissão</p>
+        <div class="t-title-row">
+          <h2 class="t-title">Cadastro de ingressos</h2>
+          <span class="t-count-badge" id="tCountBadge">0 cadastrados</span>
+        </div>
+
+        <div class="t-tabs">
+          <button class="t-tab-btn active" data-ttab="eventos">Eventos</button>
+          <button class="t-tab-btn" data-ttab="emitir">Emitir</button>
+          <button class="t-tab-btn" data-ttab="lista">Ingressos</button>
+          <button class="t-tab-btn" data-ttab="validar">Validar</button>
+          <button class="t-tab-btn" data-ttab="comprovantes">Validar por Comprovante</button>
+        </div>
+
+        <div class="t-panel" id="tpanel-eventos">
+          <p class="evt-form-title" id="evtFormTitle">Cadastrar novo evento</p>
+          <span class="evt-editing-tag" id="evtEditingTag" hidden>Editando evento</span>
+          <div class="t-field"><label for="inpEvtNome">Nome do evento</label><input id="inpEvtNome" type="text" placeholder="Ex: Calourada Radiologia 2026"></div>
+          <div class="row-flex">
+            <div class="t-field" style="flex:1;min-width:160px;"><label for="inpEvtData">Data</label><input id="inpEvtData" type="text" placeholder="Ex: 20/09/2026"></div>
+            <div class="t-field" style="flex:1;min-width:160px;"><label for="inpEvtLocal">Local (opcional)</label><input id="inpEvtLocal" type="text" placeholder="Ex: Salão de festas"></div>
+          </div>
+          <div id="evtErro" class="t-error" hidden></div>
+          <div style="display:flex;gap:10px;">
+            <button class="t-btn" id="btnSalvarEvento">Cadastrar evento</button>
+            <button class="t-btn secondary" id="btnCancelarEdicaoEvento" hidden>Cancelar edição</button>
+          </div>
+          <h3 style="margin-top:26px;margin-bottom:10px;font-family:'Oswald',sans-serif;font-size:15px;color:var(--ink-soft);">Eventos cadastrados</h3>
+          <div id="eventosManageList"></div>
+        </div>
+
+        <div class="t-panel" id="tpanel-emitir" hidden>
+          <div class="t-field">
+            <label for="inpEvento">Evento</label>
+            <select id="inpEvento" class="t-select"></select>
+          </div>
+          <div id="emitirSemEvento" class="t-hint warn" hidden>Cadastre um evento na aba "Eventos" antes de emitir ingressos.</div>
+          <div class="t-field"><label for="inpNome">Nome do comprador</label><input id="inpNome" type="text" placeholder="Ex: Ana Souza"></div>
+          <div class="t-field"><label for="inpTel">Telefone</label><input id="inpTel" type="text" placeholder="Ex: (11) 91234-5678"></div>
+          <div id="emitirErro" class="t-error" hidden></div>
+          <button class="t-btn" id="btnEmitir">Emitir ingresso</button>
+          <div id="novoIngressoWrap" style="margin-top:22px;" hidden></div>
+        </div>
+
+        <div class="t-panel" id="tpanel-lista" hidden>
+          <div class="t-counter-row" id="tCounterRow">
+            <div class="t-counter-box"><span class="t-counter-num" id="cTotal">0</span><span class="t-counter-label">cadastrados</span></div>
+            <div class="t-counter-box valido"><span class="t-counter-num" id="cValidos">0</span><span class="t-counter-label">válidos</span></div>
+            <div class="t-counter-box usado"><span class="t-counter-num" id="cUsados">0</span><span class="t-counter-label">usados</span></div>
+          </div>
+          <div class="t-evt-chips" id="evtFilterChips"></div>
+          <div class="t-search-row"><input id="inpBusca" type="text" placeholder="Buscar por nome, telefone ou código..."></div>
+          <div class="t-bulkbar">
+            <div class="t-bulk-left"><span id="bulkCountLabel">0 selecionado(s)</span></div>
+            <div class="t-bulk-actions">
+              <button class="t-btn secondary" id="btnPdfSelecionados" disabled>Baixar PDF dos selecionados</button>
+              <button class="t-btn secondary" id="btnExcluirSelecionados" disabled>Excluir selecionados</button>
+              <button class="t-btn danger" id="btnExcluirTodos">Excluir todos (nesta classificação)</button>
+            </div>
+          </div>
+          <div class="t-ledger">
+            <div class="t-ledger-head"> <div><input type="checkbox" class="t-check" id="chkSelectAll"></div> <div>QR</div> <div>Nome</div> <div class="t-col-hide">Evento</div> <div class="t-col-hide">Código</div> <div class="t-col-hide">Status</div> <div>Data</div> <div>Ações</div> </div>
+            <div id="ledgerBody"></div>
+          </div>
+        </div>
+
+        <div class="t-panel" id="tpanel-validar" hidden>
+          <div class="t-field">
+            <label for="inpCodigo">Código do ingresso</label>
+            <div class="t-verify-row"><input id="inpCodigo" type="text" placeholder="Digite ou cole o código, ex: T-ABC123"><button class="t-btn" id="btnVerificar">Validar</button></div>
+          </div>
+          <button class="t-btn secondary" id="btnCam">Usar câmera para ler o QR code</button>
+          <div class="t-cam-box" id="camBox" hidden>
+            <div id="qrReader" style="width:100%;max-width:320px;margin:0 auto;"></div>
+            <div class="t-cam-status" id="camStatus">Aponte a câmera para o QR code do ingresso.</div>
+            <button class="t-btn secondary" id="btnCamStop" style="margin-top:10px;">Fechar câmera</button>
+          </div>
+          <div class="result-area" id="resultArea" style="margin-top:20px;"></div>
+        </div>
+
+        <!-- ABA DE VALIDACAO DE COMPROVANTES AUTOMATICA POR IMAGEM -->
+        <div class="t-panel" id="tpanel-comprovantes" hidden>
+          <p class="evt-form-title">Validação Automática por Imagem de Comprovante</p>
+          <p class="t-hint">Envie a imagem do comprovante de pagamento (Pix / Transferência) para realizar o escaneamento e validação automática do ingresso correspondente.</p>
+          
+          <div class="t-field">
+            <label for="fileComprovante">Imagem do Comprovante (PNG, JPG, WebP)</label>
+            <input type="file" id="fileComprovante" accept="image/*">
+          </div>
+
+          <button class="t-btn" id="btnProcessarComprovante">Analisar e Validar Comprovante</button>
+
+          <div id="ocrStatusMsg" class="t-cam-status" style="margin-top:12px;font-weight:bold;color:var(--gold);" hidden>Lendo dados da imagem...</div>
+
+          <div id="ocrExtractedCard" class="ocr-data-card" hidden>
+            <h4>Dados Identificados na Imagem:</h4>
+            <div class="ocr-field-item"><span>Nome Pagador:</span> <i id="ocrOutName">-</i></div>
+            <div class="ocr-field-item"><span>Valor Pago:</span> <i id="ocrOutValor">-</i></div>
+            <div class="ocr-field-item"><span>ID Transação / Autenticação:</span> <i id="ocrOutTxid">-</i></div>
+            <div class="ocr-field-item"><span>Data e Horário:</span> <i id="ocrOutDate">-</i></div>
+          </div>
+
+          <div id="ocrValidationResult" class="result-area" style="margin-top:20px;"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmModal" hidden>
+  <div class="modal-box">
+    <h3 class="modal-title" id="confirmModalTitle">Confirmar ação</h3>
+    <p class="modal-msg" id="confirmModalMsg">Tem certeza?</p>
+    <div class="modal-actions">
+      <button class="t-btn secondary" id="confirmModalCancel">Cancelar</button>
+      <button class="t-btn danger" id="confirmModalOk">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="buy-modal-overlay" id="buyModalOverlay" hidden>
+  <div class="buy-modal-box">
+    <h3 class="buy-modal-title" id="buyModalProductTitle">Opções de Compra</h3>
+    <p class="buy-modal-sub">Escolha como você deseja finalizar seu pedido:</p>
+    
+    <div class="buy-options">
+      <button class="buy-opt-btn active" id="btnOptWhatsapp">WhatsApp</button>
+      <button class="buy-opt-btn" id="btnOptPix">Pix</button>
+      <button class="buy-opt-btn" id="btnOptCard">Cartão</button>
+    </div>
+
+    <div class="buy-method-sec active" id="secBuyWhatsapp">
+      <p style="font-size:13.5px;color:var(--muted);line-height:1.5;margin-bottom:18px;">Você será redirecionado para conversar diretamente com a nossa comissão e realizar a compra via WhatsApp.</p>
+      <a href="#" id="buyWhatsappLink" target="_blank" class="btn-cyan" style="display:block;text-align:center;">Ir para WhatsApp</a>
+    </div>
+
+    <div class="buy-method-sec" id="secBuyPix">
+      <div id="pixFormWrap">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Preencha os dados abaixo para gerar o Pix. Seu ingresso é aprovado automaticamente assim que o pagamento for confirmado.</p>
+        <div class="field-dark">
+          <label for="buyPixName">Nome Completo</label>
+          <input type="text" id="buyPixName" placeholder="Ex: Maria Santos">
+        </div>
+        <div class="field-dark">
+          <label for="buyPixPhone">Telefone / WhatsApp</label>
+          <input type="text" id="buyPixPhone" placeholder="Ex: (86) 99999-9999">
+        </div>
+        <div class="field-dark">
+          <label for="buyPixEmail">E-mail</label>
+          <input type="email" id="buyPixEmail" placeholder="Ex: maria@email.com">
+        </div>
+        <div class="field-dark">
+          <label for="buyPixCpf">CPF</label>
+          <input type="text" id="buyPixCpf" placeholder="Ex: 000.000.000-00">
+        </div>
+        <div id="buyPixErr" class="login-err" hidden></div>
+        <button class="btn-cyan" id="btnGerarPix">Gerar Pix</button>
+      </div>
+      <div id="pixResultWrap" hidden>
+        <div class="qr-display-box">
+          <p style="font-size:12px;color:var(--ink-soft);margin:0 0 8px;font-weight:600;">Escaneie o QR Code para pagar:</p>
+          <img id="pixQrImg" src="" alt="QR Code Pix">
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin:10px 0 4px;">Ou copie o código Pix (copia e cola):</p>
+        <div class="field-dark"><textarea id="pixCopiaCola" rows="3" readonly style="font-size:11px;width:100%;resize:none;background:var(--film-navy);color:var(--bone);border:1px solid var(--line);border-radius:8px;padding:10px;"></textarea></div>
+        <button class="btn-outline" id="btnCopiarPix" type="button" style="width:100%;margin:10px 0 14px;">Copiar código</button>
+        <div id="pixStatusMsg" style="font-size:13px;color:var(--amber);text-align:center;font-weight:600;">⏳ Aguardando confirmação do pagamento...</div>
+      </div>
+    </div>
+
+    <div class="buy-method-sec" id="secBuyCard">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Preencha os dados abaixo e depois os dados do cartão. O ingresso é liberado automaticamente após a aprovação.</p>
+      <div class="field-dark">
+        <label for="buyCardName">Nome Completo</label>
+        <input type="text" id="buyCardName" placeholder="Ex: Maria Santos">
+      </div>
+      <div class="field-dark">
+        <label for="buyCardPhone">Telefone / WhatsApp</label>
+        <input type="text" id="buyCardPhone" placeholder="Ex: (86) 99999-9999">
+      </div>
+      <div id="buyCardErr" class="login-err" hidden></div>
+      <div id="cardPaymentBrick_container"></div>
+      <div id="cardStatusMsg" style="font-size:13px;text-align:center;font-weight:600;margin-top:8px;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="buy-modal-overlay" id="editShopItemModalOverlay" hidden>
+  <div class="buy-modal-box">
+    <h3 class="buy-modal-title">Editar Anúncio</h3>
+    <p class="buy-modal-sub">Atualize as informações do produto e salve as alterações.</p>
+
+    <div class="row-flex">
+      <div class="field-dark"><label for="editShopItemTitle">Nome do Produto</label><input id="editShopItemTitle" type="text" placeholder="Ex: Tirante Radiologia"></div>
+      <div class="field-dark"><label for="editShopItemPrice">Preço (R$)</label><input id="editShopItemPrice" type="text" placeholder="Ex: R$ 15,00"></div>
+    </div>
+    <div class="field-dark"><label for="editShopItemDesc">Descrição</label><input id="editShopItemDesc" type="text" placeholder="Ex: Tirante em nylon com engate rápido de 40cm"></div>
+
+    <div class="field-dark">
+      <label for="editShopItemIsTicket">Tipo do Item</label>
+      <select id="editShopItemIsTicket">
+        <option value="false">Produto Geral</option>
+        <option value="true">Ingresso de Evento</option>
+      </select>
+    </div>
+
+    <div class="field-dark" id="editShopEventSelectWrap" hidden>
+      <label for="editShopItemEventId">Evento Vinculado</label>
+      <select id="editShopItemEventId"></select>
+    </div>
+
+    <div class="field-dark"><label for="editShopItemImgUrl">URL da Imagem do Produto</label><input id="editShopItemImgUrl" type="text" placeholder="https://..."></div>
+    <div class="field-dark">
+      <label for="editShopItemImgFile">ou envie uma foto do dispositivo</label>
+      <input id="editShopItemImgFile" type="file" accept="image/*">
+    </div>
+    <div class="upload-preview-box preview-ratio-shop" id="editShopItemImgPreviewBox">
+      <div class="upload-preview-hint">Arraste a imagem para enquadrar como será exibida no cartão do produto.</div>
+      <img id="editShopItemImgPreview" alt="Pré-visualização do produto">
+    </div>
+    <div class="zoom-control-wrap" id="editShopItemZoomWrap" hidden>
+      <label for="editShopItemZoomRange">Zoom:</label>
+      <input type="range" id="editShopItemZoomRange" min="1" max="3" step="0.05" value="1">
+    </div>
+    <button class="del-btn upload-preview-remove" id="btnRemoveEditShopItemImg" type="button" hidden>Remover imagem</button>
+
+    <div class="field-dark"><label for="editShopItemQrImgFile">Trocar Imagem do QR Code de Pagamento (opcional)</label><input id="editShopItemQrImgFile" type="file" accept="image/*"></div>
+
+    <div class="field-dark"><label for="editShopItemLink">Link do WhatsApp da comissão</label><input id="editShopItemLink" type="text" placeholder="https://wa.me/..."></div>
+
+    <div id="editShopItemErr" class="login-err" hidden></div>
+
+    <div class="modal-actions" style="margin-top:16px;">
+      <button class="t-btn secondary" id="btnCancelEditShopItem">Cancelar</button>
+      <button class="btn-cyan" id="btnSaveEditShopItem">Salvar Alterações</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
+<script src="https://sdk.mercadopago.com/js/v2"></script>
+<script>
+(function(){
+  // ================== POP-UP DE ACEITE DAS REGRAS ==================
+  (function rulesModalInit(){
+    const RULES_KEY = 'raioxCalourada_regrasAceitas_v1';
+    const overlay = document.getElementById('rulesModalOverlay');
+    const btn = document.getElementById('btnAceitarRegras');
+    if(!overlay || !btn) return;
+    let alreadyAccepted = false;
+    try{ alreadyAccepted = localStorage.getItem(RULES_KEY) === '1'; }catch(e){ alreadyAccepted = false; }
+    if(!alreadyAccepted){ overlay.hidden = false; }
+    btn.addEventListener('click', ()=>{
+      try{ localStorage.setItem(RULES_KEY, '1'); }catch(e){}
+      overlay.hidden = true;
+    });
+  })();
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBFKZWyOD1BhhyJidfZJarw0DV-o8tWq9g",
+    authDomain: "sitecarad.firebaseapp.com",
+    projectId: "sitecarad",
+    storageBucket: "sitecarad.firebasestorage.app",
+    messagingSenderId: "787001867481",
+    appId: "1:787001867481:web:e8e4a864300e3de0ab12c8"
+  };
+
+  const COLLECTION = 'calourada';
+
+  // ----- Mercado Pago (Checkout Transparente) -----
+  // Chave PÚBLICA do Mercado Pago (pode ficar no navegador com segurança).
+  // O Access Token (chave SECRETA) fica só nas Cloud Functions — nunca aqui.
+  const MP_PUBLIC_KEY = 'TEST-a60cff3e-384f-4e92-a2d5-cbaf754d49c6';
+  // Região onde as Cloud Functions (functions/index.js) foram implantadas.
+  const FUNCTIONS_REGION = 'southamerica-east1';
+  let mp = null;
+  let functionsRef = null;
+  let cardBrickController = null;
+  let pixPollTimer = null;
+
+  function initMercadoPago(){
+    if(!MP_PUBLIC_KEY || MP_PUBLIC_KEY.includes('AQUI')) return false;
+    try{
+      mp = new MercadoPago(MP_PUBLIC_KEY, { locale: 'pt-BR' });
+      return true;
+    }catch(e){ return false; }
+  }
+
+  // Deve espelhar o parser usado em functions/index.js — aqui é só para
+  // exibir o valor certo no formulário de cartão; quem decide o valor
+  // realmente cobrado é sempre o servidor (Cloud Function).
+  function parseBRLPrice(str){
+    if(!str) return 0;
+    const cleaned = String(str).replace(/[^\d,.-]/g, '');
+    const normalized = cleaned.replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.');
+    const val = parseFloat(normalized);
+    return isNaN(val) ? 0 : val;
+  }
+
+  let content = null;
+  let tickets = [];
+  let events = [];
+  let editingEventId = null;
+  let selectedTicketIds = new Set();
+  let currentEventFilter = 'todos';
+  let isLoggedIn = false;
+  let db = null;
+  let auth = null;
+  let firebaseReady = false;
+  let unsubscribeTickets = null;
+  let currentShopItemBuying = null;
+
+  function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function genId(){ return 'T-'+Math.random().toString(36).substr(2,6).toUpperCase(); }
+  function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+
+  function defaultContent(){
+    return {
+      heroTitle: 'BEM-VINDOS, CALOUROS DE RADIOLOGIA',
+      heroSubtitle: 'A turma mais nova do curso já entrou em exame de admissão à calourada. Fiquem de olho nas novidades e chapas do evento.',
+      heroDate: 'Data a definir',
+      heroImage: '',
+      shopHeroTitle: 'Vitrine da Calourada',
+      shopHeroSubtitle: 'Adquira os produtos oficiais do evento diretamente com a nossa comissão.',
+      shopHeroImage: '',
+      rulesHeroTitle: 'Regulamento Geral',
+      rulesHeroSubtitle: 'Leitura obrigatória para todos os participantes do evento.',
+      rulesHeroImage: '',
+      announcements: [],
+      photos: [],
+      shopItems: [],
+      events: []
+    };
+  }
+
+  function initFirebase(){
+    if(firebaseConfig.apiKey === 'sua api' || firebaseConfig.apiKey.includes('AQUI')){
+      return false;
+    }
+    try{
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      auth = firebase.auth();
+      functionsRef = firebase.app().functions(FUNCTIONS_REGION);
+      initMercadoPago();
+      return true;
+    }catch(e){
+      return false;
+    }
+  }
+
+  async function loadInitialContent(){
+    try{
+      const snap = await db.collection(COLLECTION).doc('content').get();
+      content = snap.exists ? snap.data() : defaultContent();
+    }catch(e){
+      content = defaultContent();
+    }
+    if(!content.announcements) content.announcements = [];
+    if(!content.photos) content.photos = [];
+    if(!content.shopItems) content.shopItems = [];
+    if(!content.events) content.events = [];
+    events = content.events;
+  }
+  
+  function watchContent(){
+    db.collection(COLLECTION).doc('content').onSnapshot(snap=>{
+      if(!snap.exists) return;
+      content = snap.data();
+      if(!content.announcements) content.announcements = [];
+      if(!content.photos) content.photos = [];
+      if(!content.shopItems) content.shopItems = [];
+      if(!content.events) content.events = [];
+      events = content.events;
+      if(views.home.classList.contains('active')) renderHome();
+      if(views.loja.classList.contains('active')) renderLoja();
+      if(views.regras.classList.contains('active')) renderRegrasView();
+      renderEventSelect();
+      renderEventFilterChips();
+      if(views.admin.classList.contains('active') && !document.getElementById('tpanel-eventos').hidden) renderEventsManage();
+    });
+  }
+  
+  async function saveContent(){
+    try{ await db.collection(COLLECTION).doc('content').set(content); return true; }catch(e){ return false; }
+  }
+
+  async function startTicketsSync(){
+    if(unsubscribeTickets) unsubscribeTickets();
+    unsubscribeTickets = db.collection('tickets').orderBy('createdAt','desc').onSnapshot(snap=>{
+      tickets = snap.docs.map(d=>d.data());
+      updateCount();
+      if(!document.getElementById('tpanel-eventos').hidden) renderEventsManage();
+      if(!document.getElementById('tpanel-lista').hidden) renderLedger();
+    }, ()=>{
+      tickets = [];
+      updateCount();
+    });
+  }
+
+  // Ingressos agora vivem em documentos individuais na coleção "tickets"
+  // (um documento por ingresso). Isso permite que as regras do Firestore
+  // bloqueiem a leitura/listagem para quem não é admin, protegendo os
+  // dados pessoais (nome, telefone, CPF) de todos os compradores.
+  async function createTicketDoc(ticket){
+    await db.collection('tickets').doc(ticket.id).set(ticket);
+  }
+  async function updateTicketDoc(id, data){
+    await db.collection('tickets').doc(id).update(data);
+  }
+  async function deleteTicketDoc(id){
+    await db.collection('tickets').doc(id).delete();
+  }
+  async function saveEvents(){
+    content.events = events;
+    return await saveContent();
+  }
+
+  function updateCount(){
+    const badge = document.getElementById('tCountBadge');
+    if(badge) badge.textContent = tickets.length + ' cadastrados';
+    const cTotal = document.getElementById('cTotal');
+    const cValidos = document.getElementById('cValidos');
+    const cUsados = document.getElementById('cUsados');
+    if(cTotal) cTotal.textContent = tickets.length;
+    if(cValidos) cValidos.textContent = tickets.filter(t=>!t.used && t.status==='approved').length;
+    if(cUsados) cUsados.textContent = tickets.filter(t=>t.used).length;
+  }
+  
+  function stopTicketsSync(){ if(unsubscribeTickets){ unsubscribeTickets(); unsubscribeTickets = null; } tickets = []; updateCount(); }
+  function flashSaved(){ const tag = document.getElementById('savedTag'); tag.classList.add('show'); setTimeout(()=>tag.classList.remove('show'), 1600); }
+
+  const views = {
+    home: document.getElementById('view-home'),
+    loja: document.getElementById('view-loja'),
+    regras: document.getElementById('view-regras'),
+    login: document.getElementById('view-login'),
+    admin: document.getElementById('view-admin'),
+  };
+  
+  function showView(name){
+    if(name === 'admin' && !isLoggedIn) name = 'login';
+    if(name !== 'admin' && typeof stopScanner === 'function') stopScanner();
+    Object.keys(views).forEach(k => views[k].classList.toggle('active', k===name));
+    document.querySelectorAll('.nav-btn[data-nav]').forEach(b=>b.classList.toggle('active', b.dataset.nav===name));
+    if(name === 'home') renderHome();
+    if(name === 'loja') renderLoja();
+    if(name === 'regras') renderRegrasView();
+    if(name === 'admin') renderAdmin();
+  }
+  
+  document.getElementById('brandHome').addEventListener('click', ()=>showView('home'));
+  document.querySelectorAll('.nav-btn[data-nav]').forEach(b=>{ b.addEventListener('click', ()=>showView(b.dataset.nav)); });
+  function updateNavAuth(){
+    document.getElementById('navLoginBtn').hidden = isLoggedIn;
+    document.getElementById('navAdminBtn').hidden = !isLoggedIn;
+    document.getElementById('navLogoutBtn').hidden = !isLoggedIn;
+  }
+  document.getElementById('navLogoutBtn').addEventListener('click', ()=>{ if(auth) auth.signOut(); });
+
+  function watchAuthState(){
+    auth.onAuthStateChanged(async user=>{
+      isLoggedIn = !!user;
+      updateNavAuth();
+      if(isLoggedIn){ await startTicketsSync(); } else { stopTicketsSync(); if(views.admin.classList.contains('active')) showView('home'); }
+    });
+  }
+
+  document.getElementById('btnLogin').addEventListener('click', async ()=>{
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass = document.getElementById('loginPass').value;
+    const errEl = document.getElementById('loginErr'); errEl.hidden = true;
+    if(!email || !pass){ errEl.textContent = 'Preencha e-mail e senha.'; errEl.hidden = false; return; }
+    try{
+      await auth.signInWithEmailAndPassword(email, pass);
+      document.getElementById('loginEmail').value = ''; document.getElementById('loginPass').value = '';
+      showView('admin');
+    }catch(e){ errEl.textContent = 'E-mail ou senha incorretos.'; errEl.hidden = false; }
+  });
+
+  function renderHome(){
+    document.getElementById('heroTitleOut').textContent = content.heroTitle || 'Carregando...';
+    document.getElementById('heroSubOut').textContent = content.heroSubtitle || '';
+    document.getElementById('heroDateOut').textContent = content.heroDate || '';
+    const heroEl = document.querySelector('.hero');
+    heroEl.style.backgroundImage = content.heroImage ? `linear-gradient(180deg, rgba(10,13,19,.45), rgba(23,31,46,.88)), url("${content.heroImage}")` : '';
+
+    const newsGrid = document.getElementById('newsGrid'); newsGrid.innerHTML = '';
+    if(content.announcements.length === 0){
+      newsGrid.innerHTML = '<p class="empty-note">Nenhuma novidade publicada ainda.</p>';
+    } else {
+      content.announcements.forEach((a, index)=>{
+        const latestClass = (index === 0) ? ' news-latest-radiology' : '';
+        newsGrid.innerHTML += `<div class="news-card${latestClass}"><p class="news-date">${esc(a.date)}</p><h3 class="news-title">${esc(a.title)}</h3><p class="news-body">${esc(a.body)}</p></div>`;
+      });
+    }
+
+    const galGrid = document.getElementById('galleryGrid'); galGrid.innerHTML = '';
+    if(content.photos.length === 0){
+      galGrid.innerHTML = '<p class="empty-note">Nenhuma foto publicada ainda.</p>';
+    } else {
+      content.photos.forEach(p=>{
+        galGrid.innerHTML += `<div class="gallery-item"><img src="${esc(p.url)}" alt="${esc(p.caption)}"><p class="gallery-cap">${esc(p.caption)}</p></div>`;
+      });
+    }
+  }
+
+  function renderLoja(){
+    document.getElementById('shopHeroTitleOut').textContent = content.shopHeroTitle || 'Vitrine da Calourada';
+    document.getElementById('shopHeroSubOut').textContent = content.shopHeroSubtitle || '';
+    const shopHeroEl = document.getElementById('shopHeroEl');
+    shopHeroEl.style.backgroundImage = content.shopHeroImage ? `linear-gradient(180deg, rgba(10,13,19,.45), rgba(23,31,46,.88)), url("${content.shopHeroImage}")` : '';
+
+    const shopGrid = document.getElementById('shopGrid'); shopGrid.innerHTML = '';
+    if(!content.shopItems || content.shopItems.length === 0){
+      shopGrid.innerHTML = '<p class="empty-note">Nenhum produto anunciado na loja ainda.</p>';
+      return;
+    }
+    content.shopItems.forEach((item, idx) => {
+      shopGrid.innerHTML += `
+        <div class="shop-card">
+          <div class="shop-img-box"><img src="${item.imgUrl ? esc(item.imgUrl) : 'https://via.placeholder.com/300x220?text=Sem+Foto'}" alt="${esc(item.title)}"></div>
+          <div class="shop-info">
+            <div class="shop-meta">
+              <h3 class="shop-title">${esc(item.title)}</h3>
+              <p class="shop-desc">${esc(item.desc)}</p>
+              <span class="shop-price">${esc(item.price)}</span>
+            </div>
+            <button class="btn-buy" data-shop-idx="${idx}">Comprar Item</button>
+          </div>
+        </div>
+      `;
+    });
+
+    shopGrid.querySelectorAll('.btn-buy').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const idx = e.target.getAttribute('data-shop-idx');
+        openBuyModal(content.shopItems[idx]);
+      });
+    });
+  }
+
+  function openBuyModal(item){
+    currentShopItemBuying = item;
+    const overlay = document.getElementById('buyModalOverlay');
+    document.getElementById('buyModalProductTitle').textContent = 'Comprar: ' + item.title;
+    document.getElementById('buyWhatsappLink').href = item.link || '#';
+
+    if(pixPollTimer){ clearInterval(pixPollTimer); pixPollTimer = null; }
+    document.getElementById('pixFormWrap').hidden = false;
+    document.getElementById('pixResultWrap').hidden = true;
+    document.getElementById('buyPixName').value = '';
+    document.getElementById('buyPixPhone').value = '';
+    document.getElementById('buyPixEmail').value = '';
+    document.getElementById('buyPixCpf').value = '';
+    document.getElementById('buyPixErr').hidden = true;
+    document.getElementById('btnGerarPix').disabled = false;
+    document.getElementById('btnGerarPix').textContent = 'Gerar Pix';
+
+    document.getElementById('buyCardName').value = '';
+    document.getElementById('buyCardPhone').value = '';
+    document.getElementById('buyCardErr').hidden = true;
+    document.getElementById('cardStatusMsg').textContent = '';
+    if(cardBrickController){ try{ cardBrickController.unmount(); }catch(e){} cardBrickController = null; }
+    document.getElementById('cardPaymentBrick_container').innerHTML = '';
+
+    switchBuyTab('whatsapp');
+    overlay.hidden = false;
+  }
+
+  const buyModalOverlay = document.getElementById('buyModalOverlay');
+  buyModalOverlay.addEventListener('click', (e) => {
+    if(e.target === buyModalOverlay){
+      buyModalOverlay.hidden = true;
+      if(pixPollTimer){ clearInterval(pixPollTimer); pixPollTimer = null; }
+    }
+  });
+
+  function switchBuyTab(tab){
+    document.getElementById('btnOptWhatsapp').classList.toggle('active', tab==='whatsapp');
+    document.getElementById('btnOptPix').classList.toggle('active', tab==='pix');
+    document.getElementById('btnOptCard').classList.toggle('active', tab==='card');
+    document.getElementById('secBuyWhatsapp').classList.toggle('active', tab==='whatsapp');
+    document.getElementById('secBuyPix').classList.toggle('active', tab==='pix');
+    document.getElementById('secBuyCard').classList.toggle('active', tab==='card');
+    if(tab === 'card') renderCardBrick();
+  }
+
+  document.getElementById('btnOptWhatsapp').addEventListener('click', () => switchBuyTab('whatsapp'));
+  document.getElementById('btnOptPix').addEventListener('click', () => switchBuyTab('pix'));
+  document.getElementById('btnOptCard').addEventListener('click', () => switchBuyTab('card'));
+
+  // -------------------- PIX --------------------
+  document.getElementById('btnGerarPix').addEventListener('click', async () => {
+    const name = document.getElementById('buyPixName').value.trim();
+    const phone = document.getElementById('buyPixPhone').value.trim();
+    const email = document.getElementById('buyPixEmail').value.trim();
+    const cpf = document.getElementById('buyPixCpf').value.trim();
+    const errEl = document.getElementById('buyPixErr');
+
+    if(!name || !phone || !email || !cpf){
+      errEl.textContent = 'Preencha Nome, Telefone, E-mail e CPF.';
+      errEl.hidden = false;
+      return;
+    }
+    if(!functionsRef || !mp){
+      errEl.textContent = 'Pagamento via Pix indisponível no momento.';
+      errEl.hidden = false;
+      return;
+    }
+    errEl.hidden = true;
+
+    const btn = document.getElementById('btnGerarPix');
+    btn.disabled = true; btn.textContent = 'Gerando...';
+    try{
+      const eventId = currentShopItemBuying.isTicket ? currentShopItemBuying.eventId : null;
+      const call = functionsRef.httpsCallable('criarPagamentoPix');
+      const res = await call({ itemId: currentShopItemBuying.id, name, phone, email, cpf, eventId });
+      const data = res.data;
+      document.getElementById('pixQrImg').src = 'data:image/png;base64,' + data.qrCodeBase64;
+      document.getElementById('pixCopiaCola').value = data.qrCode;
+      document.getElementById('pixFormWrap').hidden = true;
+      document.getElementById('pixResultWrap').hidden = false;
+      startPixPolling(data.ticketId);
+    }catch(e){
+      errEl.textContent = (e && e.message) ? e.message : 'Erro ao gerar o Pix. Tente novamente.';
+      errEl.hidden = false;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Gerar Pix';
+    }
+  });
+
+  document.getElementById('btnCopiarPix').addEventListener('click', () => {
+    const ta = document.getElementById('pixCopiaCola');
+    ta.select();
+    ta.setSelectionRange(0, 99999);
+    try{ document.execCommand('copy'); }catch(e){}
+    const btn = document.getElementById('btnCopiarPix');
+    const original = btn.textContent;
+    btn.textContent = 'Copiado!';
+    setTimeout(()=>{ btn.textContent = original; }, 1500);
+  });
+
+  function startPixPolling(ticketId){
+    if(pixPollTimer) clearInterval(pixPollTimer);
+    let elapsedMs = 0;
+    const LIMIT_MS = 10 * 60 * 1000; // 10 minutos
+    const statusMsg = document.getElementById('pixStatusMsg');
+    pixPollTimer = setInterval(async () => {
+      elapsedMs += 4000;
+      try{
+        const call = functionsRef.httpsCallable('consultarStatusIngresso');
+        const res = await call({ ticketId });
+        if(res.data.status === 'approved'){
+          clearInterval(pixPollTimer); pixPollTimer = null;
+          statusMsg.style.color = 'var(--valid)';
+          statusMsg.textContent = '✅ Pagamento confirmado! Seu ingresso foi aprovado.';
+          return;
+        }
+        if(res.data.status === 'rejected'){
+          clearInterval(pixPollTimer); pixPollTimer = null;
+          statusMsg.style.color = 'var(--used)';
+          statusMsg.textContent = '❌ Pagamento não aprovado. Feche e tente novamente.';
+          return;
+        }
+      }catch(e){}
+      if(elapsedMs >= LIMIT_MS){
+        clearInterval(pixPollTimer); pixPollTimer = null;
+        statusMsg.style.color = 'var(--muted)';
+        statusMsg.textContent = 'Tempo de confirmação automática esgotado. Se você já pagou, aguarde a aprovação da comissão.';
+      }
+    }, 4000);
+  }
+
+  // -------------------- CARTÃO --------------------
+  async function renderCardBrick(){
+    const container = document.getElementById('cardPaymentBrick_container');
+    container.innerHTML = '';
+    document.getElementById('cardStatusMsg').textContent = '';
+    if(!mp || !functionsRef){
+      container.innerHTML = '<p style="font-size:12px;color:var(--muted);">Pagamento por cartão indisponível no momento.</p>';
+      return;
+    }
+    const amount = parseBRLPrice(currentShopItemBuying.price);
+    if(!amount || amount <= 0){
+      container.innerHTML = '<p style="font-size:12px;color:var(--muted);">Este item não possui um preço válido para pagamento por cartão.</p>';
+      return;
+    }
+    try{
+      const bricksBuilder = mp.bricks();
+      cardBrickController = await bricksBuilder.create('cardPayment', 'cardPaymentBrick_container', {
+        initialization: { amount },
+        customization: {
+          visual: { style: { theme: 'dark' } },
+          paymentMethods: { maxInstallments: 3 }
+        },
+        callbacks: {
+          onReady: () => {},
+          onError: (error) => { console.error('Erro no formulário de cartão:', error); },
+          onSubmit: (cardFormData) => {
+            return new Promise(async (resolve, reject) => {
+              const name = document.getElementById('buyCardName').value.trim();
+              const phone = document.getElementById('buyCardPhone').value.trim();
+              const errEl = document.getElementById('buyCardErr');
+              if(!name || !phone){
+                errEl.textContent = 'Preencha Nome e Telefone antes de pagar.';
+                errEl.hidden = false;
+                reject();
+                return;
+              }
+              errEl.hidden = true;
+              const statusMsg = document.getElementById('cardStatusMsg');
+              statusMsg.style.color = 'var(--amber)';
+              statusMsg.textContent = 'Processando pagamento...';
+              try{
+                const eventId = currentShopItemBuying.isTicket ? currentShopItemBuying.eventId : null;
+                const call = functionsRef.httpsCallable('criarPagamentoCartao');
+                const res = await call({
+                  itemId: currentShopItemBuying.id,
+                  name, phone, eventId,
+                  ...cardFormData
+                });
+                const data = res.data;
+                if(data.status === 'approved'){
+                  statusMsg.style.color = 'var(--valid)';
+                  statusMsg.textContent = '✅ Pagamento aprovado! Seu ingresso foi confirmado.';
+                } else if(data.status === 'in_process' || data.status === 'pending'){
+                  statusMsg.style.color = 'var(--amber)';
+                  statusMsg.textContent = '⏳ Pagamento em análise. Você será avisado assim que for aprovado.';
+                } else {
+                  statusMsg.style.color = 'var(--used)';
+                  statusMsg.textContent = '❌ Pagamento recusado' + (data.statusDetail ? (' (' + data.statusDetail + ')') : '') + '. Tente outro cartão.';
+                }
+                resolve();
+              }catch(e){
+                statusMsg.style.color = 'var(--used)';
+                statusMsg.textContent = (e && e.message) ? e.message : 'Erro ao processar o pagamento. Tente novamente.';
+                reject();
+              }
+            });
+          },
+        },
+      });
+    }catch(e){
+      container.innerHTML = '<p style="font-size:12px;color:var(--muted);">Não foi possível carregar o formulário de cartão.</p>';
+    }
+  }
+
+  function renderRegrasView(){
+    document.getElementById('rulesHeroTitleOut').textContent = content.rulesHeroTitle || 'Regulamento Geral';
+    document.getElementById('rulesHeroSubOut').textContent = content.rulesHeroSubtitle || 'Leitura obrigatória para todos os participantes do evento.';
+    const rulesHeroEl = document.getElementById('rulesHeroEl');
+    rulesHeroEl.style.backgroundImage = content.rulesHeroImage ? `linear-gradient(180deg, rgba(10,13,19,.45), rgba(23,31,46,.88)), url("${content.rulesHeroImage}")` : '';
+  }
+
+  document.querySelectorAll('.subtabs .subtab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.subtabs .subtab-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('admin-conteudo').classList.toggle('active', btn.dataset.subtab==='conteudo');
+      document.getElementById('admin-loja').classList.toggle('active', btn.dataset.subtab==='loja');
+      document.getElementById('admin-regras').classList.toggle('active', btn.dataset.subtab==='regras');
+      document.getElementById('admin-ingressos').classList.toggle('active', btn.dataset.subtab==='ingressos');
+      if(btn.dataset.subtab==='ingressos'){ renderEventsManage(); renderEventSelect(); renderEventFilterChips(); renderLedger(); }
+      if(btn.dataset.subtab==='loja') renderShopManage();
+    });
+  });
+
+  // TABS INTERNAS DE GESTAO DE INGRESSOS
+  document.querySelectorAll('.t-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.t-tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const target = btn.getAttribute('data-ttab');
+      document.querySelectorAll('.t-panel').forEach(p => p.hidden = true);
+      const activePanel = document.getElementById('tpanel-' + target);
+      if(activePanel) activePanel.hidden = false;
+    });
+  });
+
+  // FERRAMENTA DE PROCESSAMENTO DE COMPROVANTES (OCR)
+  document.getElementById('btnProcessarComprovante').addEventListener('click', async () => {
+    const fileInp = document.getElementById('fileComprovante');
+    const statusMsg = document.getElementById('ocrStatusMsg');
+    const extractedCard = document.getElementById('ocrExtractedCard');
+    const resultBox = document.getElementById('ocrValidationResult');
+
+    if(!fileInp.files || !fileInp.files[0]){
+      alert('Por favor, selecione a imagem de um comprovante.');
+      return;
+    }
+
+    const file = fileInp.files[0];
+    statusMsg.hidden = false;
+    statusMsg.textContent = 'Processando OCR na imagem do comprovante... Por favor aguarde.';
+    extractedCard.hidden = true;
+    resultBox.innerHTML = '';
+
+    try {
+      const worker = await Tesseract.createWorker('por');
+      const ret = await worker.recognize(file);
+      await worker.terminate();
+
+      const text = ret.data.text;
+      statusMsg.hidden = true;
+
+      // PARSING DOS DADOS DO COMPROVANTE
+      let nameMatch = text.match(/(?:Nome|Pagador|Origem|De)\s*[:\.-]?\s*([A-Za-zÀ-ÖØ-öø-ÿ\s]{3,35})/i);
+      let valorMatch = text.match(/(?:R\$|Valor)\s*[:\.-]?\s*([\d\.\,]+)/i);
+      let txidMatch = text.match(/(?:ID|Transação|Autenticação|E-ID|Código)\s*[:\.-]?\s*([A-Za-z0-9]{10,40})/i);
+      let dateMatch = text.match(/(\d{2}\/\d{2}\/\d{4}|\d{2}-\d{2}-\d{4})(?:\s*-\s*|\s+)?(\d{2}:\d{2}(?::\d{2})?)?/i);
+
+      let extractedName = nameMatch ? nameMatch[1].trim() : 'Não identificado';
+      let extractedValor = valorMatch ? valorMatch[1].trim() : 'Não identificado';
+      let extractedTxid = txidMatch ? txidMatch[1].trim() : 'Não identificado';
+      let extractedDate = dateMatch ? (dateMatch[1] + (dateMatch[2] ? ' ' + dateMatch[2] : '')) : 'Não identificado';
+
+      document.getElementById('ocrOutName').textContent = extractedName;
+      document.getElementById('ocrOutValor').textContent = extractedValor;
+      document.getElementById('ocrOutTxid').textContent = extractedTxid;
+      document.getElementById('ocrOutDate').textContent = extractedDate;
+      extractedCard.hidden = false;
+
+      // VALIDAÇÃO E BUSCA NOS INGRESSOS
+      let foundTicket = null;
+      if(extractedName !== 'Não identificado'){
+        const cleanExtractedName = extractedName.toLowerCase();
+        foundTicket = tickets.find(t => t.name.toLowerCase().includes(cleanExtractedName) || cleanExtractedName.includes(t.name.toLowerCase()));
+      }
+
+      if(!foundTicket && extractedTxid !== 'Não identificado'){
+        foundTicket = tickets.find(t => t.id === extractedTxid);
+      }
+
+      if(foundTicket){
+        foundTicket.status = 'approved';
+        foundTicket.used = false;
+        await updateTicketDoc(foundTicket.id, { status: 'approved', used: false });
+
+        resultBox.innerHTML = `
+          <div class="t-result-box t-result-ok">
+            <h3 class="t-result-title">✅ Comprovante Valido & Ingresso Aprovado!</h3>
+            <p class="t-result-sub"><b>Comprador:</b> ${esc(foundTicket.name)}</p>
+            <p class="t-result-sub"><b>Evento:</b> ${esc(foundTicket.eventName || 'Não informado')}</p>
+            <p class="t-result-sub"><b>Código do Ingresso:</b> ${esc(foundTicket.id)}</p>
+            <p class="t-result-sub">O status do ingresso foi automaticamente atualizado para <b>VÁLIDO</b> no sistema.</p>
+          </div>
+        `;
+      } else {
+        resultBox.innerHTML = `
+          <div class="t-result-box t-result-invalid">
+            <h3 class="t-result-title">⚠️ Nenhum Ingresso Correspondente Encontrado</h3>
+            <p class="t-result-sub">Não foi possível associar os dados lidos do comprovante (${esc(extractedName)}) a nenhum ingresso cadastrado no sistema.</p>
+          </div>
+        `;
+      }
+
+    } catch(err){
+      statusMsg.hidden = true;
+      alert('Erro ao realizar a leitura OCR da imagem. Verifique se o arquivo de imagem é válido.');
+    }
+  });
+
+  // ================== FERRAMENTA DE CROP / AJUSTE DE IMAGEM ==================
+  function makeInteractiveCropBox(boxId, imgId, removeBtnId, zoomRangeId, zoomWrapId){
+    const box = document.getElementById(boxId);
+    const img = document.getElementById(imgId);
+    const removeBtn = removeBtnId ? document.getElementById(removeBtnId) : null;
+    const zoomRange = zoomRangeId ? document.getElementById(zoomRangeId) : null;
+    const zoomWrap = zoomWrapId ? document.getElementById(zoomWrapId) : null;
+
+    let isDragging = false;
+    let startX = 0, startY = 0;
+    let posX = 0, posY = 0;
+    let scale = 1;
+    let imgNaturalW = 0, imgNaturalH = 0;
+
+    function applyBounds(){
+      const boxRect = box.getBoundingClientRect();
+      const currentW = imgNaturalW * scale;
+      const currentH = imgNaturalH * scale;
+
+      const minX = boxRect.width - currentW;
+      const maxX = 0;
+      const minY = boxRect.height - currentH;
+      const maxY = 0;
+
+      if(currentW < boxRect.width){
+        posX = (boxRect.width - currentW) / 2;
+      } else {
+        posX = Math.min(maxX, Math.max(minX, posX));
+      }
+
+      if(currentH < boxRect.height){
+        posY = (boxRect.height - currentH) / 2;
+      } else {
+        posY = Math.min(maxY, Math.max(minY, posY));
+      }
+
+      img.style.width = currentW + 'px';
+      img.style.height = currentH + 'px';
+      img.style.left = posX + 'px';
+      img.style.top = posY + 'px';
+    }
+
+    function initPos(){
+      const boxRect = box.getBoundingClientRect();
+      if(!imgNaturalW || !imgNaturalH) return;
+
+      const coverScale = Math.max(boxRect.width / imgNaturalW, boxRect.height / imgNaturalH);
+      scale = coverScale * (zoomRange ? parseFloat(zoomRange.value) : 1);
+      
+      posX = (boxRect.width - imgNaturalW * scale) / 2;
+      posY = (boxRect.height - imgNaturalH * scale) / 2;
+
+      applyBounds();
+    }
+
+    img.onload = function(){
+      imgNaturalW = img.naturalWidth;
+      imgNaturalH = img.naturalHeight;
+      if(zoomRange) zoomRange.value = 1;
+      initPos();
+    };
+
+    if(zoomRange){
+      zoomRange.addEventListener('input', function(){
+        if(!imgNaturalW) return;
+        const boxRect = box.getBoundingClientRect();
+        const oldScale = scale;
+        const coverScale = Math.max(boxRect.width / imgNaturalW, boxRect.height / imgNaturalH);
+        scale = coverScale * parseFloat(this.value);
+
+        const centerX = boxRect.width / 2;
+        const centerY = boxRect.height / 2;
+        posX = centerX - ((centerX - posX) * (scale / oldScale));
+        posY = centerY - ((centerY - posY) * (scale / oldScale));
+
+        applyBounds();
+      });
+    }
+
+    function onPointerDown(e){
+      if(!box.classList.contains('has-img')) return;
+      isDragging = true;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      startX = clientX - posX;
+      startY = clientY - posY;
+      e.preventDefault();
+    }
+
+    function onPointerMove(e){
+      if(!isDragging) return;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      posX = clientX - startX;
+      posY = clientY - startY;
+      applyBounds();
+    }
+
+    function onPointerUp(){
+      isDragging = false;
+    }
+
+    box.addEventListener('mousedown', onPointerDown);
+    window.addEventListener('mousemove', onPointerMove);
+    window.addEventListener('mouseup', onPointerUp);
+
+    box.addEventListener('touchstart', onPointerDown, {passive:false});
+    window.addEventListener('touchmove', onPointerMove, {passive:false});
+    window.addEventListener('touchend', onPointerUp);
+
+    return {
+      show(url){
+        if(!url){ this.clear(); return; }
+        img.src = url;
+        box.classList.add('has-img');
+        if(removeBtn) removeBtn.hidden = false;
+        if(zoomWrap) zoomWrap.hidden = false;
+      },
+      clear(){
+        img.removeAttribute('src');
+        img.style.left = '0px';
+        img.style.top = '0px';
+        img.style.width = 'auto';
+        img.style.height = 'auto';
+        box.classList.remove('has-img');
+        if(removeBtn) removeBtn.hidden = true;
+        if(zoomWrap) zoomWrap.hidden = true;
+        imgNaturalW = 0;
+        imgNaturalH = 0;
+      },
+      getCroppedCanvas(targetWidth){
+        if(!box.classList.contains('has-img') || !imgNaturalW) return null;
+        const boxRect = box.getBoundingClientRect();
+        const aspect = boxRect.width / boxRect.height;
+        const tw = targetWidth || 1200;
+        const th = Math.round(tw / aspect);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = tw;
+        canvas.height = th;
+        const ctx = canvas.getContext('2d');
+
+        const srcX = (0 - posX) / scale;
+        const srcY = (0 - posY) / scale;
+        const srcW = boxRect.width / scale;
+        const srcH = boxRect.height / scale;
+
+        ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, tw, th);
+        return canvas;
+      },
+      getCroppedBase64(targetWidth, quality){
+        const cvs = this.getCroppedCanvas(targetWidth);
+        return cvs ? cvs.toDataURL('image/jpeg', quality || 0.85) : null;
+      }
+    };
+  }
+
+  const heroPreviewCtrl = makeInteractiveCropBox('heroImgPreviewBox', 'heroImgPreview', 'btnRemoveHeroImg', 'heroZoomRange', 'heroZoomWrap');
+  const shopHeroPreviewCtrl = makeInteractiveCropBox('shopHeroImgPreviewBox', 'shopHeroImgPreview', 'btnRemoveShopHeroImg', 'shopHeroZoomRange', 'shopHeroZoomWrap');
+  const rulesHeroPreviewCtrl = makeInteractiveCropBox('rulesHeroImgPreviewBox', 'rulesHeroImgPreview', 'btnRemoveRulesHeroImg', 'rulesHeroZoomRange', 'rulesHeroZoomWrap');
+  const galleryPreviewCtrl = makeInteractiveCropBox('galleryImgPreviewBox', 'galleryImgPreview', 'btnRemoveGalleryImg', 'galleryZoomRange', 'galleryZoomWrap');
+  const shopItemPreviewCtrl = makeInteractiveCropBox('shopItemImgPreviewBox', 'shopItemImgPreview', 'btnRemoveShopItemImg', 'shopItemZoomRange', 'shopItemZoomWrap');
+  const editShopItemPreviewCtrl = makeInteractiveCropBox('editShopItemImgPreviewBox', 'editShopItemImgPreview', 'btnRemoveEditShopItemImg', 'editShopItemZoomRange', 'editShopItemZoomWrap');
+
+  function renderAdmin(){
+    document.getElementById('edHeroTitle').value = content.heroTitle || '';
+    document.getElementById('edHeroSub').value = content.heroSubtitle || '';
+    document.getElementById('edHeroDate').value = content.heroDate || '';
+    document.getElementById('edHeroImgUrl').value = content.heroImage && !content.heroImage.startsWith('data:') ? content.heroImage : '';
+    
+    document.getElementById('edShopHeroTitle').value = content.shopHeroTitle || 'Vitrine da Calourada';
+    document.getElementById('edShopHeroSub').value = content.shopHeroSubtitle || '';
+    document.getElementById('edShopHeroImgUrl').value = content.shopHeroImage && !content.shopHeroImage.startsWith('data:') ? content.shopHeroImage : '';
+
+    document.getElementById('edRulesHeroTitle').value = content.rulesHeroTitle || 'Regulamento Geral';
+    document.getElementById('edRulesHeroSub').value = content.rulesHeroSubtitle || 'Leitura obrigatória para todos os participantes do evento.';
+    document.getElementById('edRulesHeroImgUrl').value = content.rulesHeroImage && !content.rulesHeroImage.startsWith('data:') ? content.rulesHeroImage : '';
+
+    heroPreviewCtrl.show(content.heroImage || '');
+    shopHeroPreviewCtrl.show(content.shopHeroImage || '');
+    rulesHeroPreviewCtrl.show(content.rulesHeroImage || '');
+    renderNewsManage();
+    renderPhotoManage();
+    renderShopManage();
+    renderEventsManage();
+    renderEventSelect();
+    renderEventFilterChips();
+    updateCount();
+    const emailOut = document.getElementById('accountEmailOut');
+    if(emailOut) emailOut.textContent = (auth && auth.currentUser) ? 'Conectado como ' + auth.currentUser.email : '';
+  }
+
+  document.getElementById('edHeroImgFile').addEventListener('change', function(e){
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(evt){ heroPreviewCtrl.show(evt.target.result); };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('edHeroImgUrl').addEventListener('input', function(e){
+    const val = e.target.value.trim();
+    if(val){ heroPreviewCtrl.show(val); }
+  });
+
+  document.getElementById('btnRemoveHeroImg').addEventListener('click', ()=>{
+    content.heroImage = ''; document.getElementById('edHeroImgUrl').value = ''; document.getElementById('edHeroImgFile').value = ''; heroPreviewCtrl.clear();
+  });
+
+  document.getElementById('btnSaveHero').addEventListener('click', async ()=>{
+    content.heroTitle = document.getElementById('edHeroTitle').value.trim() || content.heroTitle;
+    content.heroSubtitle = document.getElementById('edHeroSub').value.trim();
+    content.heroDate = document.getElementById('edHeroDate').value.trim();
+    
+    const cropped = heroPreviewCtrl.getCroppedBase64(1200, 0.85);
+    if(cropped){
+      content.heroImage = cropped;
+    } else {
+      const urlVal = document.getElementById('edHeroImgUrl').value.trim();
+      if(urlVal) content.heroImage = urlVal;
+    }
+    await saveContent(); flashSaved();
+  });
+
+  document.getElementById('edShopHeroImgFile').addEventListener('change', function(e) {
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(evt){ shopHeroPreviewCtrl.show(evt.target.result); };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('edShopHeroImgUrl').addEventListener('input', function(e){
+    const val = e.target.value.trim();
+    if(val) shopHeroPreviewCtrl.show(val);
+  });
+
+  document.getElementById('btnRemoveShopHeroImg').addEventListener('click', () => {
+    document.getElementById('edShopHeroImgUrl').value = '';
+    document.getElementById('edShopHeroImgFile').value = '';
+    shopHeroPreviewCtrl.clear();
+  });
+
+  document.getElementById('btnSaveShopHero').addEventListener('click', async () => {
+    content.shopHeroTitle = document.getElementById('edShopHeroTitle').value.trim() || 'Vitrine da Calourada';
+    content.shopHeroSubtitle = document.getElementById('edShopHeroSub').value.trim();
+    
+    const cropped = shopHeroPreviewCtrl.getCroppedBase64(1200, 0.85);
+    if(cropped) {
+      content.shopHeroImage = cropped;
+    } else {
+      content.shopHeroImage = document.getElementById('edShopHeroImgUrl').value.trim();
+    }
+    await saveContent();
+    flashSaved();
+  });
+
+  document.getElementById('edRulesHeroImgFile').addEventListener('change', function(e) {
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(evt){ rulesHeroPreviewCtrl.show(evt.target.result); };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('edRulesHeroImgUrl').addEventListener('input', function(e){
+    const val = e.target.value.trim();
+    if(val) rulesHeroPreviewCtrl.show(val);
+  });
+
+  document.getElementById('btnRemoveRulesHeroImg').addEventListener('click', () => {
+    document.getElementById('edRulesHeroImgUrl').value = '';
+    document.getElementById('edRulesHeroImgFile').value = '';
+    rulesHeroPreviewCtrl.clear();
+  });
+
+  document.getElementById('btnSaveRulesHero').addEventListener('click', async () => {
+    content.rulesHeroTitle = document.getElementById('edRulesHeroTitle').value.trim() || 'Regulamento Geral';
+    content.rulesHeroSubtitle = document.getElementById('edRulesHeroSub').value.trim();
+    
+    const cropped = rulesHeroPreviewCtrl.getCroppedBase64(1200, 0.85);
+    if(cropped) {
+      content.rulesHeroImage = cropped;
+    } else {
+      content.rulesHeroImage = document.getElementById('edRulesHeroImgUrl').value.trim();
+    }
+    await saveContent();
+    flashSaved();
+  });
+
+  function renderNewsManage(){
+    const wrap = document.getElementById('newsManageList'); wrap.innerHTML = '';
+    content.announcements.forEach(a=>{
+      const row = document.createElement('div'); row.className = 'list-manage-item';
+      row.innerHTML = `<div class="lmi-text"><b>${esc(a.title)}</b>${esc(a.date)} — ${esc(a.body)}</div><button class="del-btn">Remover</button>`;
+      row.querySelector('.del-btn').addEventListener('click', async ()=>{
+        content.announcements = content.announcements.filter(x=>x.id!==a.id); await saveContent(); renderNewsManage();
+      });
+      wrap.appendChild(row);
+    });
+  }
+
+  document.getElementById('btnAddNews').addEventListener('click', async ()=>{
+    const title = document.getElementById('newTitle').value.trim();
+    const date = document.getElementById('newDate').value.trim() || 'Sem data';
+    const body = document.getElementById('newBody').value.trim();
+    if(!title) return;
+    content.announcements.unshift({id:uid(), title, date, body});
+    await saveContent();
+    document.getElementById('newTitle').value=''; document.getElementById('newDate').value=''; document.getElementById('newBody').value='';
+    renderNewsManage(); flashSaved();
+  });
+
+  document.getElementById('newPhotoFile').addEventListener('change', function(e) {
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(evt){ galleryPreviewCtrl.show(evt.target.result); };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('newPhotoUrl').addEventListener('input', function(e){
+    const val = e.target.value.trim();
+    if(val) galleryPreviewCtrl.show(val);
+  });
+
+  document.getElementById('btnRemoveGalleryImg').addEventListener('click', () => {
+    document.getElementById('newPhotoUrl').value = '';
+    document.getElementById('newPhotoFile').value = '';
+    galleryPreviewCtrl.clear();
+  });
+
+  function renderPhotoManage(){
+    const wrap = document.getElementById('photoManageList'); wrap.innerHTML = '';
+    content.photos.forEach(p=>{
+      const row = document.createElement('div'); row.className = 'list-manage-item';
+      row.innerHTML = `<div class="thumb-row"><img src="${esc(p.url)}"><div class="lmi-text"><b>${esc(p.caption)}</b></div></div><button class="del-btn">Remover</button>`;
+      row.querySelector('.del-btn').addEventListener('click', async ()=>{
+        content.photos = content.photos.filter(x=>x.id!==p.id); await saveContent(); renderPhotoManage();
+      });
+      wrap.appendChild(row);
+    });
+  }
+
+  document.getElementById('btnAddPhoto').addEventListener('click', async ()=>{
+    let url = galleryPreviewCtrl.getCroppedBase64(800, 0.85);
+    if(!url) url = document.getElementById('newPhotoUrl').value.trim();
+    const caption = document.getElementById('newPhotoCap').value.trim() || 'Sem legenda';
+    
+    if(!url) return;
+
+    content.photos.unshift({id:uid(), url, caption});
+    await saveContent();
+    document.getElementById('newPhotoUrl').value=''; document.getElementById('newPhotoCap').value='';
+    document.getElementById('newPhotoFile').value = '';
+    galleryPreviewCtrl.clear();
+    renderPhotoManage(); flashSaved();
+  });
+
+  let shopQrBase64 = '';
+  document.getElementById('shopItemQrImgFile').addEventListener('change', function(e){
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(evt){ shopQrBase64 = evt.target.result; };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('shopItemIsTicket').addEventListener('change', function(e){
+    const isTicket = e.target.value === 'true';
+    document.getElementById('shopEventSelectWrap').hidden = !isTicket;
+  });
+
+  function renderShopManage(){
+    const wrap = document.getElementById('shopManageList'); wrap.innerHTML = '';
+    const selEvt = document.getElementById('shopItemEventId');
+    if(selEvt){
+      selEvt.innerHTML = events.map(ev => `<option value="${ev.id}">${esc(ev.name)}</option>`).join('');
+    }
+
+    if(!content.shopItems || content.shopItems.length === 0){
+      wrap.innerHTML = '<p class="lmi-text">Nenhum produto cadastrado.</p>'; return;
+    }
+    content.shopItems.forEach(item => {
+      const row = document.createElement('div'); row.className = 'list-manage-item';
+      row.innerHTML = `<div class="thumb-row"><img src="${item.imgUrl ? esc(item.imgUrl) : 'https://via.placeholder.com/52x40?text=No+Img'}"><div class="lmi-text"><b>${esc(item.title)} (${esc(item.price)})</b><span>${esc(item.desc)}</span></div></div><div class="lmi-actions" style="display:flex;gap:8px;flex-shrink:0;"><button class="btn-outline edit-btn" type="button" style="padding:6px 12px;font-size:12px;">Editar</button><button class="del-btn">Excluir Anúncio</button></div>`;
+      row.querySelector('.del-btn').addEventListener('click', async () => {
+        content.shopItems = content.shopItems.filter(x => x.id !== item.id); await saveContent(); renderShopManage();
+      });
+      row.querySelector('.edit-btn').addEventListener('click', () => {
+        openEditShopItemModal(item);
+      });
+      wrap.appendChild(row);
+    });
+  }
+
+  // ================== EDITAR ANÚNCIO DE PRODUTO (POP-UP) ==================
+  let editingShopItemId = null;
+  let editShopItemNewImageUsed = false;
+  let editShopQrBase64 = '';
+  let editShopItemNewQrUsed = false;
+
+  function openEditShopItemModal(item){
+    editingShopItemId = item.id;
+    editShopItemNewImageUsed = false;
+    editShopItemNewQrUsed = false;
+    editShopQrBase64 = item.qrImg || '';
+
+    document.getElementById('editShopItemTitle').value = item.title || '';
+    document.getElementById('editShopItemPrice').value = item.price || '';
+    document.getElementById('editShopItemDesc').value = item.desc || '';
+    document.getElementById('editShopItemIsTicket').value = item.isTicket ? 'true' : 'false';
+    document.getElementById('editShopItemLink').value = item.link || '';
+    document.getElementById('editShopItemImgUrl').value = item.imgUrl && !item.imgUrl.startsWith('data:') ? item.imgUrl : '';
+    document.getElementById('editShopItemImgFile').value = '';
+    document.getElementById('editShopItemQrImgFile').value = '';
+    const err = document.getElementById('editShopItemErr'); err.hidden = true; err.textContent = '';
+
+    const selEvt = document.getElementById('editShopItemEventId');
+    if(selEvt){
+      selEvt.innerHTML = events.map(ev => `<option value="${ev.id}">${esc(ev.name)}</option>`).join('');
+      if(item.eventId) selEvt.value = item.eventId;
+    }
+    document.getElementById('editShopEventSelectWrap').hidden = !item.isTicket;
+
+    if(item.imgUrl){
+      editShopItemPreviewCtrl.show(item.imgUrl);
+    } else {
+      editShopItemPreviewCtrl.clear();
+    }
+
+    document.getElementById('editShopItemModalOverlay').hidden = false;
+  }
+
+  function closeEditShopItemModal(){
+    document.getElementById('editShopItemModalOverlay').hidden = true;
+    editingShopItemId = null;
+  }
+
+  document.getElementById('editShopItemIsTicket').addEventListener('change', function(e){
+    const isTicket = e.target.value === 'true';
+    document.getElementById('editShopEventSelectWrap').hidden = !isTicket;
+  });
+
+  document.getElementById('editShopItemImgFile').addEventListener('change', function(e){
+    const file = e.target.files[0]; if(!file) return;
+    editShopItemNewImageUsed = true;
+    const reader = new FileReader();
+    reader.onload = function(evt){ editShopItemPreviewCtrl.show(evt.target.result); };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('editShopItemQrImgFile').addEventListener('change', function(e){
+    const file = e.target.files[0]; if(!file) return;
+    editShopItemNewQrUsed = true;
+    const reader = new FileReader();
+    reader.onload = function(evt){ editShopQrBase64 = evt.target.result; };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('btnCancelEditShopItem').addEventListener('click', closeEditShopItemModal);
+
+  document.getElementById('editShopItemModalOverlay').addEventListener('click', (e) => {
+    if(e.target === document.getElementById('editShopItemModalOverlay')) closeEditShopItemModal();
+  });
+
+  document.getElementById('btnSaveEditShopItem').addEventListener('click', async () => {
+    if(!editingShopItemId) return;
+    const title = document.getElementById('editShopItemTitle').value.trim();
+    const price = document.getElementById('editShopItemPrice').value.trim();
+    const desc = document.getElementById('editShopItemDesc').value.trim();
+    const isTicket = document.getElementById('editShopItemIsTicket').value === 'true';
+    const eventId = isTicket ? document.getElementById('editShopItemEventId').value : null;
+    const link = document.getElementById('editShopItemLink').value.trim();
+    const urlInput = document.getElementById('editShopItemImgUrl').value.trim();
+
+    const err = document.getElementById('editShopItemErr');
+    if(!title || !price){ err.textContent = 'Preencha Nome e Preço do produto.'; err.hidden = false; return; }
+    err.hidden = true;
+
+    const idx = content.shopItems.findIndex(x => x.id === editingShopItemId);
+    if(idx === -1){ closeEditShopItemModal(); return; }
+    const original = content.shopItems[idx];
+
+    let imgUrl = original.imgUrl;
+    if(editShopItemNewImageUsed){
+      const cropped = editShopItemPreviewCtrl.getCroppedBase64(600, 0.85);
+      if(cropped) imgUrl = cropped;
+    } else if(urlInput && urlInput !== original.imgUrl){
+      imgUrl = urlInput;
+    } else if(!urlInput && !original.imgUrl){
+      imgUrl = '';
+    }
+
+    const qrImg = editShopItemNewQrUsed ? editShopQrBase64 : original.qrImg;
+
+    content.shopItems[idx] = {
+      ...original,
+      title, price, desc, isTicket, eventId, imgUrl, qrImg, link
+    };
+
+    await saveContent();
+    closeEditShopItemModal();
+    renderShopManage();
+    flashSaved();
+  });
+
+  document.getElementById('shopItemImgFile').addEventListener('change', function(e) {
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(evt) { shopItemPreviewCtrl.show(evt.target.result); };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('btnAddShopItem').addEventListener('click', async () => {
+    const title = document.getElementById('shopItemTitle').value.trim();
+    const price = document.getElementById('shopItemPrice').value.trim();
+    const desc = document.getElementById('shopItemDesc').value.trim();
+    const isTicket = document.getElementById('shopItemIsTicket').value === 'true';
+    const eventId = isTicket ? document.getElementById('shopItemEventId').value : null;
+    const link = document.getElementById('shopItemLink').value.trim();
+    
+    let imgUrl = shopItemPreviewCtrl.getCroppedBase64(600, 0.85);
+    if(!imgUrl) imgUrl = document.getElementById('shopItemImgUrl').value.trim();
+
+    if(!title || !price){ alert('Preencha Nome e Preço do produto.'); return; }
+
+    const newItem = {
+      id: uid(),
+      title,
+      price,
+      desc,
+      isTicket,
+      eventId,
+      imgUrl,
+      qrImg: shopQrBase64,
+      link
+    };
+
+    if(!content.shopItems) content.shopItems = [];
+    content.shopItems.unshift(newItem);
+    await saveContent();
+    
+    document.getElementById('shopItemTitle').value = '';
+    document.getElementById('shopItemPrice').value = '';
+    document.getElementById('shopItemDesc').value = '';
+    document.getElementById('shopItemImgUrl').value = '';
+    document.getElementById('shopItemLink').value = '';
+    document.getElementById('shopItemImgFile').value = '';
+    document.getElementById('shopItemQrImgFile').value = '';
+    shopQrBase64 = '';
+    shopItemPreviewCtrl.clear();
+    
+    renderShopManage();
+    flashSaved();
+  });
+
+  function renderEventsManage(){
+    const wrap = document.getElementById('eventosManageList'); if(!wrap) return; wrap.innerHTML = '';
+    if(!events.length){ wrap.innerHTML = '<p class="t-empty">Nenhum evento cadastrado.</p>'; return; }
+    events.forEach(ev=>{
+      const row = document.createElement('div'); row.className = 'list-manage-item';
+      row.innerHTML = `<div class="lmi-text"><b>${esc(ev.name)}</b>Data: ${esc(ev.date || 'Não informada')} ${ev.location ? '&middot; Local: '+esc(ev.location) : ''}</div><div class="lmi-actions"><button class="edit-btn">Editar</button><button class="del-btn">Excluir</button></div>`;
+      row.querySelector('.edit-btn').addEventListener('click', ()=>editEvent(ev));
+      row.querySelector('.del-btn').addEventListener('click', ()=>deleteEvent(ev.id));
+      wrap.appendChild(row);
+    });
+  }
+
+  function editEvent(ev){
+    editingEventId = ev.id;
+    document.getElementById('inpEvtNome').value = ev.name;
+    document.getElementById('inpEvtData').value = ev.date || '';
+    document.getElementById('inpEvtLocal').value = ev.location || '';
+    document.getElementById('evtFormTitle').textContent = 'Editar evento';
+    document.getElementById('evtEditingTag').hidden = false;
+    document.getElementById('btnSalvarEvento').textContent = 'Salvar alterações';
+    document.getElementById('btnCancelarEdicaoEvento').hidden = false;
+  }
+
+  function cancelEditEvent(){
+    editingEventId = null;
+    document.getElementById('inpEvtNome').value = '';
+    document.getElementById('inpEvtData').value = '';
+    document.getElementById('inpEvtLocal').value = '';
+    document.getElementById('evtFormTitle').textContent = 'Cadastrar novo evento';
+    document.getElementById('evtEditingTag').hidden = true;
+    document.getElementById('btnSalvarEvento').textContent = 'Cadastrar evento';
+    document.getElementById('btnCancelarEdicaoEvento').hidden = true;
+  }
+
+  document.getElementById('btnCancelarEdicaoEvento').addEventListener('click', cancelEditEvent);
+
+  document.getElementById('btnSalvarEvento').addEventListener('click', async ()=>{
+    const name = document.getElementById('inpEvtNome').value.trim();
+    const date = document.getElementById('inpEvtData').value.trim();
+    const location = document.getElementById('inpEvtLocal').value.trim();
+    const err = document.getElementById('evtErro'); err.hidden = true;
+    if(!name){ err.textContent = 'Preencha o nome do evento.'; err.hidden = false; return; }
+    if(editingEventId){
+      const ev = events.find(x=>x.id===editingEventId);
+      if(ev){ ev.name = name; ev.date = date; ev.location = location; }
+    } else {
+      events.push({id: uid(), name, date, location});
+    }
+    await saveEvents();
+    cancelEditEvent();
+    renderEventsManage();
+    renderEventSelect();
+    renderEventFilterChips();
+  });
+
+  async function deleteEvent(id){
+    if(!confirm('Excluir este evento? Ingressos vinculados a ele continuarão mantidos.')) return;
+    events = events.filter(x=>x.id!==id);
+    await saveEvents();
+    renderEventsManage();
+    renderEventSelect();
+    renderEventFilterChips();
+  }
+
+  function renderEventSelect(){
+    const sel = document.getElementById('inpEvento'); if(!sel) return;
+    const warn = document.getElementById('emitirSemEvento');
+    sel.innerHTML = '';
+    if(!events.length){
+      if(warn) warn.hidden = false;
+      return;
+    }
+    if(warn) warn.hidden = true;
+    events.forEach(ev=>{
+      sel.innerHTML += `<option value="${esc(ev.id)}">${esc(ev.name)} (${esc(ev.date || 'Sem data')})</option>`;
+    });
+  }
+
+  function renderEventFilterChips(){
+    const wrap = document.getElementById('evtFilterChips'); if(!wrap) return; wrap.innerHTML = '';
+    const allChip = document.createElement('button');
+    allChip.className = 't-evt-chip' + (currentEventFilter==='todos'?' active':'');
+    allChip.textContent = 'Todos os eventos';
+    allChip.addEventListener('click', ()=>{ currentEventFilter='todos'; renderEventFilterChips(); renderLedger(); });
+    wrap.appendChild(allChip);
+
+    events.forEach(ev=>{
+      const chip = document.createElement('button');
+      chip.className = 't-evt-chip' + (currentEventFilter===ev.id?' active':'');
+      chip.textContent = ev.name;
+      chip.addEventListener('click', ()=>{ currentEventFilter=ev.id; renderEventFilterChips(); renderLedger(); });
+      wrap.appendChild(chip);
+    });
+  }
+
+  document.getElementById('btnEmitir').addEventListener('click', async ()=>{
+    const name = document.getElementById('inpNome').value.trim();
+    const phone = document.getElementById('inpTel').value.trim();
+    const eventId = document.getElementById('inpEvento').value;
+    const err = document.getElementById('emitirErro'); err.hidden = true;
+
+    if(!events.length){ err.textContent = 'Cadastre um evento primeiro na aba "Eventos".'; err.hidden = false; return; }
+    if(!name){ err.textContent = 'Digite o nome do comprador.'; err.hidden = false; return; }
+
+    const ev = events.find(x=>x.id===eventId) || events[0];
+    const ticket = {
+      id: genId(),
+      name,
+      phone,
+      eventId: ev.id,
+      eventName: ev.name,
+      used: false,
+      status: 'approved',
+      createdAt: new Date().toISOString()
+    };
+
+    await createTicketDoc(ticket);
+    document.getElementById('inpNome').value = ''; document.getElementById('inpTel').value = '';
+    renderNewTicketStub(ticket);
+  });
+
+  function renderNewTicketStub(ticket){
+    const wrap = document.getElementById('novoIngressoWrap'); wrap.hidden = false;
+    wrap.innerHTML = `
+      <div class="t-stub">
+        <div class="t-stub-info">
+          <p class="t-stub-event">${esc(ticket.eventName || '')}</p>
+          <p class="t-stub-code">CÓDIGO: ${esc(ticket.id)}</p>
+          <h3 class="t-stub-name">${esc(ticket.name)}</h3>
+          <p class="t-stub-phone">${esc(ticket.phone || 'Sem telefone')}</p>
+          <span class="t-pill valido">VÁLIDO</span>
+        </div>
+        <div id="stubQr_${ticket.id}"></div>
+      </div>
+      <div class="t-stub-actions">
+        <button class="btn-baixar-pdf" onclick="baixarPdfIngresso('${ticket.id}')">📄 Baixar PDF do ingresso</button>
+      </div>
+    `;
+    new QRCode(document.getElementById(`stubQr_${ticket.id}`), { text: ticket.id, width: 80, height: 80 });
+  }
+
+  /* ---------------- GERAÇÃO DE PDF DOS INGRESSOS ---------------- */
+
+  // Gera um QR code em alta resolução fora da tela e retorna como dataURL (PNG),
+  // desacoplado de qualquer elemento já renderizado na página.
+  function getQrDataUrl(text, size){
+    return new Promise((resolve)=>{
+      const temp = document.createElement('div');
+      temp.style.position = 'fixed';
+      temp.style.left = '-9999px';
+      temp.style.top = '-9999px';
+      document.body.appendChild(temp);
+      new QRCode(temp, {
+        text: text,
+        width: size,
+        height: size,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+      // qrcodejs renderiza de forma síncrona no construtor
+      setTimeout(()=>{
+        const canvas = temp.querySelector('canvas');
+        let dataUrl = '';
+        if(canvas){
+          dataUrl = canvas.toDataURL('image/png');
+        } else {
+          const img = temp.querySelector('img');
+          if(img) dataUrl = img.src;
+        }
+        document.body.removeChild(temp);
+        resolve(dataUrl);
+      }, 30);
+    });
+  }
+
+  // Desenha um único ingresso (formato de bilhete) numa página do documento jsPDF já existente.
+  async function desenharIngressoNoDoc(doc, ticket){
+    const W = 190, H = 90;
+
+    // fundo escuro
+    doc.setFillColor(10,13,19);
+    doc.rect(0,0,W,H,'F');
+
+    // faixa lateral ciano
+    doc.setFillColor(111,217,236);
+    doc.rect(0,0,4,H,'F');
+
+    // linha pontilhada de destaque (simulando picote)
+    doc.setDrawColor(42,53,71);
+    doc.setLineWidth(0.3);
+    doc.setLineDashPattern([1.5,1.5], 0);
+    doc.line(132,4,132,H-4);
+    doc.setLineDashPattern([], 0);
+
+    // eyebrow
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(9);
+    doc.setTextColor(232,162,60);
+    doc.text('INGRESSO OFICIAL', 12, 13);
+
+    // nome do evento
+    doc.setFontSize(11);
+    doc.setTextColor(139,148,166);
+    doc.text(String(ticket.eventName || 'Evento').toUpperCase(), 12, 21, { maxWidth: 112 });
+
+    // nome do comprador
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(20);
+    doc.setTextColor(243,238,226);
+    doc.text(String(ticket.name || ''), 12, 38, { maxWidth: 112 });
+
+    // telefone
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(10);
+    doc.setTextColor(139,148,166);
+    doc.text(String(ticket.phone || 'Sem telefone'), 12, 47);
+
+    // código
+    doc.setFont('courier','normal');
+    doc.setFontSize(11);
+    doc.setTextColor(111,217,236);
+    doc.text('CÓDIGO: ' + String(ticket.id), 12, 58);
+
+    // pill de status
+    const isUsed = !!ticket.used;
+    const isPending = ticket.status === 'pending';
+    const isRejected = ticket.status === 'rejected';
+    let pillLabel = 'VÁLIDO', pillColor = [47,107,78];
+    if(isPending){ pillLabel = 'PENDENTE'; pillColor = [146,64,14]; }
+    else if(isRejected){ pillLabel = 'RECUSADO'; pillColor = [165,54,43]; }
+    else if(isUsed){ pillLabel = 'USADO'; pillColor = [165,54,43]; }
+    doc.setFillColor(...pillColor);
+    doc.roundedRect(12,64,30,9,3,3,'F');
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(8);
+    doc.setTextColor(255,255,255);
+    doc.text(pillLabel, 27, 69.7, { align:'center' });
+
+    // data de emissão
+    doc.setFont('courier','normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(139,148,166);
+    doc.text('Emitido em: ' + new Date(ticket.createdAt).toLocaleDateString('pt-BR'), 12, 82);
+
+    // QR code em alta resolução — precisa de fundo branco sólido e zona de
+    // silêncio (margem branca) ao redor para o leitor conseguir decodificar.
+    const qrSize = 38, qrX = 142, qrY = 14;
+    const qrPad = 4; // margem branca (zona de silêncio) em mm
+    doc.setFillColor(255,255,255);
+    doc.roundedRect(qrX - qrPad, qrY - qrPad, qrSize + qrPad*2, qrSize + qrPad*2, 2, 2, 'F');
+    try{
+      const qrData = await getQrDataUrl(ticket.id, 300);
+      if(qrData){
+        doc.addImage(qrData, 'PNG', qrX, qrY, qrSize, qrSize);
+      }
+    }catch(e){ /* segue sem travar a geração do PDF */ }
+
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(7);
+    doc.setTextColor(139,148,166);
+    doc.text('Apresente este QR code', 142, qrY + qrSize + qrPad + 8, { maxWidth: 38 });
+    doc.text('na entrada do evento.', 142, qrY + qrSize + qrPad + 12, { maxWidth: 38 });
+  }
+
+  function criarDocIngresso(){
+    const { jsPDF } = window.jspdf;
+    return new jsPDF({ orientation:'landscape', unit:'mm', format:[190,90] });
+  }
+
+  async function gerarPdfIngresso(ticket){
+    const doc = criarDocIngresso();
+    await desenharIngressoNoDoc(doc, ticket);
+    doc.save(`ingresso_${ticket.id}.pdf`);
+  }
+
+  async function gerarPdfMultiplos(ticketList){
+    if(!ticketList.length) return;
+    const doc = criarDocIngresso();
+    for(let i=0;i<ticketList.length;i++){
+      if(i>0) doc.addPage([190,90], 'landscape');
+      await desenharIngressoNoDoc(doc, ticketList[i]);
+    }
+    doc.save(`ingressos_${new Date().toISOString().slice(0,10)}.pdf`);
+  }
+
+  window.baixarPdfIngresso = async function(id){
+    const t = tickets.find(x=>x.id===id);
+    if(!t) return;
+    await gerarPdfIngresso(t);
+  };
+
+  function renderLedger(){
+    const body = document.getElementById('ledgerBody'); if(!body) return; body.innerHTML = '';
+    const q = document.getElementById('inpBusca').value.toLowerCase().trim();
+
+    let list = tickets;
+    if(currentEventFilter !== 'todos'){
+      list = list.filter(t => t.eventId === currentEventFilter);
+    }
+    if(q){
+      list = list.filter(t => t.name.toLowerCase().includes(q) || (t.phone && t.phone.toLowerCase().includes(q)) || t.id.toLowerCase().includes(q));
+    }
+
+    if(!list.length){
+      body.innerHTML = '<div class="t-empty">Nenhum ingresso encontrado.</div>';
+      return;
+    }
+
+    list.forEach(t=>{
+      const isPending = t.status === 'pending';
+      const isRejected = t.status === 'rejected';
+      const statusPill = isPending ? `<span class="t-pill pendente">PENDENTE</span>` : isRejected ? `<span class="t-pill usado">RECUSADO</span>` : (t.used ? `<span class="t-pill usado">USADO</span>` : `<span class="t-pill valido">VÁLIDO</span>`);
+      const row = document.createElement('div');
+      row.className = 't-ledger-row';
+      row.innerHTML = `
+        <div><input type="checkbox" class="t-check chk-ticket" data-id="${t.id}" ${selectedTicketIds.has(t.id)?'checked':''}></div>
+        <div class="t-qr-mini" id="qrMini_${t.id}"></div>
+        <div class="t-ledger-name">${esc(t.name)}</div>
+        <div class="t-col-hide">${esc(t.eventName || '-')}</div>
+        <div class="t-col-hide">${esc(t.id)}</div>
+        <div class="t-col-hide">${statusPill}</div>
+        <div>${new Date(t.createdAt).toLocaleDateString()}</div>
+        <div>
+          ${isPending ? `<button class="t-btn" style="padding:4px 8px;font-size:10px;" onclick="approveTicket('${t.id}')">Aprovar</button>` : ''}
+          <button class="t-pdf-icon" title="Baixar PDF" onclick="baixarPdfIngresso('${t.id}')">📄</button>
+          <button class="t-del-icon" onclick="deleteSingleTicket('${t.id}')">&times;</button>
+        </div>
+      `;
+      body.appendChild(row);
+      new QRCode(document.getElementById(`qrMini_${t.id}`), { text: t.id, width: 28, height: 28 });
+    });
+
+    document.querySelectorAll('.chk-ticket').forEach(chk => {
+      chk.addEventListener('change', (e)=>{
+        if(e.target.checked) selectedTicketIds.add(e.target.dataset.id);
+        else selectedTicketIds.delete(e.target.dataset.id);
+        updateBulkActions();
+      });
+    });
+  }
+
+  window.approveTicket = async function(id){
+    const t = tickets.find(x=>x.id===id);
+    if(t){
+      await updateTicketDoc(id, { status: 'approved' });
+      renderLedger();
+    }
+  };
+
+  window.deleteSingleTicket = async function(id){
+    if(!confirm('Excluir este ingresso permanentemente?')) return;
+    selectedTicketIds.delete(id);
+    await deleteTicketDoc(id);
+    renderLedger();
+  };
+
+  document.getElementById('chkSelectAll').addEventListener('change', (e)=>{
+    const checked = e.target.checked;
+    let list = tickets;
+    if(currentEventFilter !== 'todos') list = list.filter(t => t.eventId === currentEventFilter);
+    list.forEach(t => {
+      if(checked) selectedTicketIds.add(t.id);
+      else selectedTicketIds.delete(t.id);
+    });
+    renderLedger();
+    updateBulkActions();
+  });
+
+  function updateBulkActions(){
+    const btnDel = document.getElementById('btnExcluirSelecionados');
+    const btnPdf = document.getElementById('btnPdfSelecionados');
+    const label = document.getElementById('bulkCountLabel');
+    if(btnDel) btnDel.disabled = selectedTicketIds.size === 0;
+    if(btnPdf) btnPdf.disabled = selectedTicketIds.size === 0;
+    if(label) label.textContent = `${selectedTicketIds.size} selecionado(s)`;
+  }
+
+  document.getElementById('btnPdfSelecionados').addEventListener('click', async ()=>{
+    const selecionados = tickets.filter(t => selectedTicketIds.has(t.id));
+    if(!selecionados.length) return;
+    const btn = document.getElementById('btnPdfSelecionados');
+    const textoOriginal = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Gerando PDF...';
+    try{
+      await gerarPdfMultiplos(selecionados);
+    } finally {
+      btn.textContent = textoOriginal;
+      btn.disabled = selectedTicketIds.size === 0;
+    }
+  });
+
+  document.getElementById('btnExcluirSelecionados').addEventListener('click', async ()=>{
+    if(!confirm(`Excluir ${selectedTicketIds.size} ingresso(s) selecionado(s)?`)) return;
+    const idsToDelete = Array.from(selectedTicketIds);
+    selectedTicketIds.clear();
+    await Promise.all(idsToDelete.map(id => deleteTicketDoc(id)));
+    renderLedger();
+    updateBulkActions();
+  });
+
+  document.getElementById('btnExcluirTodos').addEventListener('click', async ()=>{
+    const evtName = currentEventFilter==='todos'?'todos os eventos': (events.find(e=>e.id===currentEventFilter)?.name || 'este evento');
+    if(!confirm(`ATENÇÃO: Excluir TODOS os ingressos vinculados a: "${evtName}"?`)) return;
+    const toDelete = currentEventFilter === 'todos' ? tickets : tickets.filter(t => t.eventId === currentEventFilter);
+    selectedTicketIds.clear();
+    await Promise.all(toDelete.map(t => deleteTicketDoc(t.id)));
+    renderLedger();
+    updateBulkActions();
+  });
+
+  document.getElementById('inpBusca').addEventListener('input', renderLedger);
+
+  document.getElementById('btnVerificar').addEventListener('click', ()=>{
+    const code = document.getElementById('inpCodigo').value.trim();
+    if(!code) return;
+    verifyCode(code);
+  });
+
+  async function verifyCode(code){
+    const area = document.getElementById('resultArea');
+    const t = tickets.find(x => x.id.toUpperCase() === code.toUpperCase());
+    if(!t){
+      area.innerHTML = `<div class="t-result-box t-result-invalid"><h3 class="t-result-title">❌ Ingresso Não Encontrado</h3><p class="t-result-sub">O código "${esc(code)}" não existe no sistema.</p></div>`;
+      return;
+    }
+    if(t.used){
+      area.innerHTML = `<div class="t-result-box t-result-used"><h3 class="t-result-title">⚠️ Ingresso Já Utilizado</h3><p class="t-result-sub"><b>Comprador:</b> ${esc(t.name)}</p><p class="t-result-sub">Este ingresso já foi validado anteriormente.</p></div>`;
+      return;
+    }
+    if(t.status === 'pending'){
+      area.innerHTML = `<div class="t-result-box t-result-used"><h3 class="t-result-title">⏳ Pagamento Pendente</h3><p class="t-result-sub"><b>Comprador:</b> ${esc(t.name)}</p><p class="t-result-sub">Este ingresso aguarda aprovação de pagamento pela comissão.</p></div>`;
+      return;
+    }
+    if(t.status === 'rejected'){
+      area.innerHTML = `<div class="t-result-box t-result-invalid"><h3 class="t-result-title">❌ Pagamento Recusado</h3><p class="t-result-sub"><b>Comprador:</b> ${esc(t.name)}</p><p class="t-result-sub">O pagamento deste ingresso não foi aprovado.</p></div>`;
+      return;
+    }
+
+    t.used = true;
+    await updateTicketDoc(t.id, { used: true });
+    area.innerHTML = `
+      <div class="t-result-box t-result-ok">
+        <h3 class="t-result-title">✅ Entrada Liberada!</h3>
+        <p class="t-result-sub"><b>Comprador:</b> ${esc(t.name)}</p>
+        <p class="t-result-sub"><b>Evento:</b> ${esc(t.eventName || 'Não especificado')}</p>
+        <p class="t-result-sub">O ingresso foi marcado como <b>USADO</b> no sistema.</p>
+      </div>
+    `;
+  }
+
+  let html5QrCode = null;
+  document.getElementById('btnCam').addEventListener('click', ()=>{
+    document.getElementById('camBox').hidden = false;
+    html5QrCode = new Html5Qrcode("qrReader");
+    html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      (decodedText) => {
+        document.getElementById('inpCodigo').value = decodedText;
+        verifyCode(decodedText);
+        stopScanner();
+      },
+      () => {}
+    ).catch(() => {
+      document.getElementById('camStatus').textContent = 'Erro ao acessar a câmera.';
+    });
+  });
+
+  function stopScanner(){
+    if(html5QrCode){
+      html5QrCode.stop().then(() => {
+        html5QrCode.clear();
+        document.getElementById('camBox').hidden = true;
+      }).catch(()=>{});
+    }
+  }
+
+  document.getElementById('btnCamStop').addEventListener('click', stopScanner);
+
+  window.addEventListener('DOMContentLoaded', async ()=>{
+    if(initFirebase()){
+      await loadInitialContent();
+      watchContent();
+      watchAuthState();
+    } else {
+      content = defaultContent();
+    }
+    renderHome();
+  });
+
+})();
+</script>
+</body>
+</html>
