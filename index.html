@@ -1155,6 +1155,7 @@ footer{text-align:center;padding:40px 20px 60px;color:var(--muted);font-size:12p
         <div class="field-dark"><textarea id="pixCopiaCola" rows="3" readonly style="font-size:11px;width:100%;resize:none;background:var(--film-navy);color:var(--bone);border:1px solid var(--line);border-radius:8px;padding:10px;"></textarea></div>
         <button class="btn-outline" id="btnCopiarPix" type="button" style="width:100%;margin:10px 0 14px;">Copiar código</button>
         <div id="pixStatusMsg" style="font-size:13px;color:var(--amber);text-align:center;font-weight:600;">⏳ Aguardando confirmação do pagamento...</div>
+        <button class="btn-outline" id="btnBaixarIngressoPix" type="button" style="width:100%;margin-top:12px;" hidden>Baixar Ingresso (PDF)</button>
       </div>
     </div>
 
@@ -1171,6 +1172,7 @@ footer{text-align:center;padding:40px 20px 60px;color:var(--muted);font-size:12p
       <div id="buyCardErr" class="login-err" hidden></div>
       <div id="cardPaymentBrick_container"></div>
       <div id="cardStatusMsg" style="font-size:13px;text-align:center;font-weight:600;margin-top:8px;"></div>
+      <button class="btn-outline" id="btnBaixarIngressoCard" type="button" style="width:100%;margin-top:12px;" hidden>Baixar Ingresso (PDF)</button>
     </div>
   </div>
 </div>
@@ -1554,11 +1556,16 @@ footer{text-align:center;padding:40px 20px 60px;color:var(--muted);font-size:12p
     document.getElementById('buyPixErr').hidden = true;
     document.getElementById('btnGerarPix').disabled = false;
     document.getElementById('btnGerarPix').textContent = 'Gerar Pix';
+    document.getElementById('btnBaixarIngressoPix').hidden = true;
+    pendingPixTicketInfo = null;
 
     document.getElementById('buyCardName').value = '';
     document.getElementById('buyCardPhone').value = '';
     document.getElementById('buyCardErr').hidden = true;
     document.getElementById('cardStatusMsg').textContent = '';
+    document.getElementById('btnBaixarIngressoCard').hidden = true;
+    if(cardPollTimer){ clearInterval(cardPollTimer); cardPollTimer = null; }
+    window.pendingCardTicketInfo = null;
     if(cardBrickController){ try{ cardBrickController.unmount(); }catch(e){} cardBrickController = null; }
     document.getElementById('cardPaymentBrick_container').innerHTML = '';
 
@@ -1566,11 +1573,20 @@ footer{text-align:center;padding:40px 20px 60px;color:var(--muted);font-size:12p
     overlay.hidden = false;
   }
 
+  let pendingPixTicketInfo = null;
+  document.getElementById('btnBaixarIngressoPix').addEventListener('click', () => {
+    if(pendingPixTicketInfo) gerarPdfIngresso(pendingPixTicketInfo);
+  });
+  document.getElementById('btnBaixarIngressoCard').addEventListener('click', () => {
+    if(window.pendingCardTicketInfo) gerarPdfIngresso(window.pendingCardTicketInfo);
+  });
+
   const buyModalOverlay = document.getElementById('buyModalOverlay');
   buyModalOverlay.addEventListener('click', (e) => {
     if(e.target === buyModalOverlay){
       buyModalOverlay.hidden = true;
       if(pixPollTimer){ clearInterval(pixPollTimer); pixPollTimer = null; }
+      if(cardPollTimer){ clearInterval(cardPollTimer); cardPollTimer = null; }
     }
   });
 
@@ -1619,6 +1635,10 @@ footer{text-align:center;padding:40px 20px 60px;color:var(--muted);font-size:12p
       document.getElementById('pixCopiaCola').value = data.qrCode;
       document.getElementById('pixFormWrap').hidden = true;
       document.getElementById('pixResultWrap').hidden = false;
+
+      const eventName = currentShopItemBuying.isTicket ? (events.find(e=>e.id===eventId)?.name || 'Evento') : ('Loja - ' + currentShopItemBuying.title);
+      pendingPixTicketInfo = { id: data.ticketId, name, phone, eventName, createdAt: new Date().toISOString(), status: 'pending', used: false };
+
       startPixPolling(data.ticketId);
     }catch(e){
       errEl.textContent = (e && e.message) ? e.message : 'Erro ao gerar o Pix. Tente novamente.';
@@ -1639,6 +1659,40 @@ footer{text-align:center;padding:40px 20px 60px;color:var(--muted);font-size:12p
     setTimeout(()=>{ btn.textContent = original; }, 1500);
   });
 
+  let cardPollTimer = null;
+
+  function startCardPolling(ticketId, ticketInfo){
+    if(cardPollTimer) clearInterval(cardPollTimer);
+    let elapsedMs = 0;
+    const LIMIT_MS = 10 * 60 * 1000;
+    const statusMsg = document.getElementById('cardStatusMsg');
+    cardPollTimer = setInterval(async () => {
+      elapsedMs += 4000;
+      try{
+        const call = functionsRef.httpsCallable('consultarStatusIngresso');
+        const res = await call({ ticketId });
+        if(res.data.status === 'approved'){
+          clearInterval(cardPollTimer); cardPollTimer = null;
+          statusMsg.style.color = 'var(--valid)';
+          statusMsg.textContent = '✅ Pagamento aprovado! Seu ingresso foi confirmado e enviado para o seu e-mail.';
+          ticketInfo.status = 'approved';
+          window.pendingCardTicketInfo = ticketInfo;
+          document.getElementById('btnBaixarIngressoCard').hidden = false;
+          return;
+        }
+        if(res.data.status === 'rejected'){
+          clearInterval(cardPollTimer); cardPollTimer = null;
+          statusMsg.style.color = 'var(--used)';
+          statusMsg.textContent = '❌ Pagamento não aprovado.';
+          return;
+        }
+      }catch(e){}
+      if(elapsedMs >= LIMIT_MS){
+        clearInterval(cardPollTimer); cardPollTimer = null;
+      }
+    }, 4000);
+  }
+
   function startPixPolling(ticketId){
     if(pixPollTimer) clearInterval(pixPollTimer);
     let elapsedMs = 0;
@@ -1652,7 +1706,11 @@ footer{text-align:center;padding:40px 20px 60px;color:var(--muted);font-size:12p
         if(res.data.status === 'approved'){
           clearInterval(pixPollTimer); pixPollTimer = null;
           statusMsg.style.color = 'var(--valid)';
-          statusMsg.textContent = '✅ Pagamento confirmado! Seu ingresso foi aprovado.';
+          statusMsg.textContent = '✅ Pagamento confirmado! Seu ingresso foi aprovado e enviado para o seu e-mail.';
+          if(pendingPixTicketInfo){
+            pendingPixTicketInfo.status = 'approved';
+            document.getElementById('btnBaixarIngressoPix').hidden = false;
+          }
           return;
         }
         if(res.data.status === 'rejected'){
@@ -1721,10 +1779,15 @@ footer{text-align:center;padding:40px 20px 60px;color:var(--muted);font-size:12p
                 const data = res.data;
                 if(data.status === 'approved'){
                   statusMsg.style.color = 'var(--valid)';
-                  statusMsg.textContent = '✅ Pagamento aprovado! Seu ingresso foi confirmado.';
+                  statusMsg.textContent = '✅ Pagamento aprovado! Seu ingresso foi confirmado e enviado para o seu e-mail.';
+                  const eventName = currentShopItemBuying.isTicket ? (events.find(e=>e.id===eventId)?.name || 'Evento') : ('Loja - ' + currentShopItemBuying.title);
+                  window.pendingCardTicketInfo = { id: data.ticketId, name, phone, eventName, createdAt: new Date().toISOString(), status: 'approved', used: false };
+                  document.getElementById('btnBaixarIngressoCard').hidden = false;
                 } else if(data.status === 'in_process' || data.status === 'pending'){
                   statusMsg.style.color = 'var(--amber)';
                   statusMsg.textContent = '⏳ Pagamento em análise. Você será avisado assim que for aprovado.';
+                  const eventName = currentShopItemBuying.isTicket ? (events.find(e=>e.id===eventId)?.name || 'Evento') : ('Loja - ' + currentShopItemBuying.title);
+                  startCardPolling(data.ticketId, { id: data.ticketId, name, phone, eventName, createdAt: new Date().toISOString(), status: 'pending', used: false });
                 } else {
                   statusMsg.style.color = 'var(--used)';
                   statusMsg.textContent = '❌ Pagamento recusado' + (data.statusDetail ? (' (' + data.statusDetail + ')') : '') + '. Tente outro cartão.';

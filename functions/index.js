@@ -18,17 +18,25 @@
  *                              pagamento com cartão (usando o token gerado
  *                              pelo Card Brick no navegador — o número do
  *                              cartão em si NUNCA passa pelo nosso servidor).
- *   - consultarStatusIngresso: permite o site perguntar "esse ingresso já
- *                              foi aprovado?" sem precisar de acesso de
- *                              leitura direto à coleção "tickets" (que é
- *                              bloqueada para o público no firestore.rules).
+ *   - consultarStatusIngresso: usado pelo site para saber se o Pix já foi
+ *                              aprovado. Além de ler o Firestore, esta
+ *                              função também CONSULTA A API DO MERCADO PAGO
+ *                              diretamente (usando o paymentId salvo) e
+ *                              atualiza o ingresso na hora — é isso que faz
+ *                              a aprovação do Pix ser automática mesmo que
+ *                              o webhook não esteja configurado/chegando.
  *   - mercadoPagoWebhook     : recebe a confirmação assíncrona do Mercado
- *                              Pago (principalmente para o Pix) e aprova o
- *                              ingresso automaticamente. Valida a assinatura
- *                              (x-signature) para garantir que a notificação
- *                              realmente veio do Mercado Pago — sem isso,
- *                              qualquer pessoa poderia "fingir" um pagamento
- *                              aprovado só chamando essa URL.
+ *                              Pago (uma segunda via de aprovação automática,
+ *                              mais rápida quando funciona). Valida a
+ *                              assinatura (x-signature) para garantir que a
+ *                              notificação realmente veio do Mercado Pago —
+ *                              sem isso, qualquer pessoa poderia "fingir" um
+ *                              pagamento aprovado só chamando essa URL.
+ *
+ * Assim que um ingresso é aprovado (por qualquer um dos três caminhos acima),
+ * é enviado automaticamente um e-mail para o comprador com o PDF do
+ * ingresso anexado (função enviarEmailIngresso). Um campo "emailSent" no
+ * documento do ingresso evita que o e-mail seja disparado mais de uma vez.
  *
  * IMPORTANTE — o valor cobrado NUNCA vem do navegador. Todas as funções
  * buscam o preço do produto direto no Firestore (calourada/content) usando
@@ -44,6 +52,11 @@
  *   firebase functions:secrets:set MP_WEBHOOK_SECRET
  *     -> cole a "Chave secreta" mostrada em:
  *        Mercado Pago > Suas integrações > (sua aplicação) > Webhooks
+ *
+ *   firebase functions:secrets:set EMAIL_HOST      (ex: smtp.gmail.com)
+ *   firebase functions:secrets:set EMAIL_PORT      (ex: 465)
+ *   firebase functions:secrets:set EMAIL_USER      (seu e-mail de envio)
+ *   firebase functions:secrets:set EMAIL_PASS      (senha de app do e-mail)
  *
  *   cd functions && npm install
  *
@@ -63,6 +76,9 @@ const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
 const crypto = require("crypto");
 const { MercadoPagoConfig, Payment } = require("mercadopago");
+const nodemailer = require("nodemailer");
+const QRCode = require("qrcode");
+const PDFDocument = require("pdfkit");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -70,6 +86,11 @@ const db = admin.firestore();
 const REGION = "southamerica-east1";
 const MP_ACCESS_TOKEN = defineSecret("MP_ACCESS_TOKEN");
 const MP_WEBHOOK_SECRET = defineSecret("MP_WEBHOOK_SECRET");
+const EMAIL_HOST = defineSecret("EMAIL_HOST");
+const EMAIL_PORT = defineSecret("EMAIL_PORT");
+const EMAIL_USER = defineSecret("EMAIL_USER");
+const EMAIL_PASS = defineSecret("EMAIL_PASS");
+const EMAIL_SECRETS = [EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS];
 
 function getMpClient() {
   return new MercadoPagoConfig({
@@ -98,6 +119,127 @@ function isValidEmail(str) {
 
 function genTicketId() {
   return "T-" + crypto.randomBytes(4).toString("hex").toUpperCase();
+}
+
+// ============================================================================
+// PDF do ingresso (gerado no servidor, para anexar ao e-mail) + envio de
+// e-mail. Visual mais simples que o PDF do painel admin (gerado no
+// navegador com jsPDF), mas com as mesmas informações essenciais.
+// ============================================================================
+async function gerarPdfIngressoBuffer(ticket) {
+  const qrDataUrl = await QRCode.toDataURL(ticket.id, { margin: 1, width: 300 });
+  const qrBuffer = Buffer.from(qrDataUrl.split(",")[1], "base64");
+
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ size: [539, 255], margin: 0 }); // ~190x90mm em pontos
+    const chunks = [];
+    doc.on("data", (c) => chunks.push(c));
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
+
+    // fundo escuro
+    doc.rect(0, 0, 539, 255).fill("#0A0D13");
+    // faixa lateral ciano
+    doc.rect(0, 0, 11, 255).fill("#6FD9EC");
+
+    doc.fillColor("#E8A23C").fontSize(13).font("Helvetica-Bold")
+      .text("INGRESSO OFICIAL", 34, 30);
+    doc.fillColor("#8B94A6").fontSize(15)
+      .text(String(ticket.eventName || "Evento").toUpperCase(), 34, 55, { width: 300 });
+    doc.fillColor("#F3EEE2").fontSize(28).font("Helvetica-Bold")
+      .text(String(ticket.name || ""), 34, 95, { width: 300 });
+    doc.fillColor("#8B94A6").fontSize(13).font("Helvetica")
+      .text(String(ticket.phone || "Sem telefone"), 34, 132);
+    doc.fillColor("#6FD9EC").fontSize(15).font("Courier")
+      .text("CÓDIGO: " + String(ticket.id), 34, 158);
+
+    doc.roundedRect(34, 182, 90, 26, 4).fill("#2F6B4E");
+    doc.fillColor("#FFFFFF").fontSize(11).font("Helvetica-Bold")
+      .text("VÁLIDO", 34, 189, { width: 90, align: "center" });
+
+    doc.fillColor("#8B94A6").fontSize(9).font("Courier")
+      .text("Emitido em: " + new Date().toLocaleDateString("pt-BR"), 34, 228);
+
+    // QR code (com fundo branco / zona de silêncio)
+    const qrSize = 105, qrX = 400, qrY = 40;
+    doc.roundedRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20, 4).fill("#FFFFFF");
+    doc.image(qrBuffer, qrX, qrY, { width: qrSize, height: qrSize });
+    doc.fillColor("#8B94A6").fontSize(8).font("Helvetica")
+      .text("Apresente este QR code", qrX - 10, qrY + qrSize + 22, { width: qrSize + 20, align: "center" })
+      .text("na entrada do evento.", qrX - 10, qrY + qrSize + 32, { width: qrSize + 20, align: "center" });
+
+    doc.end();
+  });
+}
+
+function getMailTransport() {
+  return nodemailer.createTransport({
+    host: EMAIL_HOST.value(),
+    port: Number(EMAIL_PORT.value()) || 465,
+    secure: Number(EMAIL_PORT.value()) !== 587, // 465 = SSL direto; 587 = STARTTLS
+    auth: { user: EMAIL_USER.value(), pass: EMAIL_PASS.value() },
+  });
+}
+
+async function enviarEmailIngresso(ticket) {
+  if (!ticket.email) return;
+  try {
+    const pdfBuffer = await gerarPdfIngressoBuffer(ticket);
+    const transport = getMailTransport();
+    await transport.sendMail({
+      from: `"Calourada" <${EMAIL_USER.value()}>`,
+      to: ticket.email,
+      subject: `🎟️ Seu ingresso — ${ticket.eventName || "Evento"}`,
+      text:
+        `Olá, ${ticket.name}!\n\n` +
+        `Seu pagamento foi aprovado e seu ingresso para "${ticket.eventName}" está confirmado.\n\n` +
+        `Código do ingresso: ${ticket.id}\n\n` +
+        `O ingresso em PDF (com QR code para entrada) está anexado a este e-mail.\n\n` +
+        `Até lá!`,
+      attachments: [
+        { filename: `ingresso_${ticket.id}.pdf`, content: pdfBuffer, contentType: "application/pdf" },
+      ],
+    });
+    logger.info(`E-mail de ingresso enviado para ${ticket.email} (ticket ${ticket.id})`);
+  } catch (e) {
+    // Falha no envio de e-mail nunca deve derrubar a aprovação do pagamento.
+    logger.error(`Erro ao enviar e-mail do ingresso ${ticket.id}`, e);
+  }
+}
+
+/**
+ * Ponto único que decide o novo status de um ingresso a partir do status
+ * retornado pelo Mercado Pago, grava no Firestore e dispara o e-mail quando
+ * o ingresso é aprovado — usado tanto pela checagem ativa (polling) quanto
+ * pelo webhook, evitando código duplicado e envios de e-mail repetidos.
+ */
+async function finalizarStatusIngresso(ticketRef, ticketDataAtual, mpStatus, mpStatusDetail, mpPaymentId) {
+  const updates = {
+    paymentStatus: mpStatus,
+    paymentStatusDetail: mpStatusDetail || null,
+  };
+  if (mpPaymentId) updates.paymentId = String(mpPaymentId);
+
+  let novoStatus = ticketDataAtual.status;
+  if (mpStatus === "approved") novoStatus = "approved";
+  else if (mpStatus === "rejected" || mpStatus === "cancelled") novoStatus = "rejected";
+
+  const jaEnviouEmail = !!ticketDataAtual.emailSent;
+  const vaiAprovarAgora = novoStatus === "approved" && ticketDataAtual.status !== "approved";
+
+  if (novoStatus !== ticketDataAtual.status) updates.status = novoStatus;
+
+  if (novoStatus === "approved" && !jaEnviouEmail) {
+    updates.emailSent = true;
+  }
+
+  await ticketRef.update(updates);
+
+  if (novoStatus === "approved" && !jaEnviouEmail) {
+    await enviarEmailIngresso({ ...ticketDataAtual, ...updates, status: novoStatus });
+  }
+
+  return novoStatus;
 }
 
 /**
@@ -229,7 +371,7 @@ exports.criarPagamentoPix = onCall(
 // 2) CARTÃO — cria o ingresso pendente + processa o pagamento com cartão
 // ============================================================================
 exports.criarPagamentoCartao = onCall(
-  { region: REGION, secrets: [MP_ACCESS_TOKEN] },
+  { region: REGION, secrets: [MP_ACCESS_TOKEN, ...EMAIL_SECRETS] },
   async (request) => {
     const {
       itemId, name, phone, eventId,
@@ -301,23 +443,16 @@ exports.criarPagamentoCartao = onCall(
     }
 
     const status = mpResponse.status; // approved | in_process | rejected | ...
-    const updates = {
-      paymentId: String(mpResponse.id),
-      paymentStatus: status,
-      paymentStatusDetail: mpResponse.status_detail || null,
-    };
-    if (status === "approved") {
-      updates.status = "approved";
-    } else if (status === "rejected" || status === "cancelled") {
-      updates.status = "rejected";
-    }
+    const ticketDataAtual = (await ticketRef.get()).data();
+    const novoStatus = await finalizarStatusIngresso(
+      ticketRef, ticketDataAtual, status, mpResponse.status_detail, mpResponse.id
+    );
     // "in_process" / "pending": mantém o ingresso como "pending" até o
-    // webhook confirmar (ou o admin revisar manualmente pelo painel).
-    await ticketRef.update(updates);
+    // webhook ou a checagem ativa confirmarem.
 
     return {
       ticketId,
-      status,
+      status: novoStatus,
       statusDetail: mpResponse.status_detail || null,
     };
   }
@@ -327,27 +462,50 @@ exports.criarPagamentoCartao = onCall(
 // 3) CONSULTAR STATUS — usado pelo site para saber se o Pix já foi aprovado,
 //    sem precisar de leitura pública na coleção "tickets".
 // ============================================================================
-exports.consultarStatusIngresso = onCall({ region: REGION }, async (request) => {
-  const { ticketId } = request.data || {};
-  if (!ticketId || typeof ticketId !== "string") {
-    throw new HttpsError("invalid-argument", "ticketId inválido.");
+exports.consultarStatusIngresso = onCall(
+  { region: REGION, secrets: [MP_ACCESS_TOKEN, ...EMAIL_SECRETS] },
+  async (request) => {
+    const { ticketId } = request.data || {};
+    if (!ticketId || typeof ticketId !== "string") {
+      throw new HttpsError("invalid-argument", "ticketId inválido.");
+    }
+    const ticketRef = db.collection("tickets").doc(ticketId);
+    const snap = await ticketRef.get();
+    if (!snap.exists) {
+      throw new HttpsError("not-found", "Ingresso não encontrado.");
+    }
+    let data = snap.data();
+
+    // Enquanto o ingresso estiver pendente e já tivermos um paymentId,
+    // consultamos a API do Mercado Pago diretamente — é isso que aprova o
+    // Pix automaticamente, mesmo se o webhook não estiver configurado.
+    if (data.status === "pending" && data.paymentId) {
+      try {
+        const client = getMpClient();
+        const payment = new Payment(client);
+        const mpPayment = await payment.get({ id: data.paymentId });
+        await finalizarStatusIngresso(
+          ticketRef, data, mpPayment.status, mpPayment.status_detail, mpPayment.id
+        );
+        data = (await ticketRef.get()).data();
+      } catch (e) {
+        logger.error(`Erro ao consultar pagamento ${data.paymentId} do ingresso ${ticketId}`, e);
+        // Se a consulta falhar, devolve o status que já estava salvo.
+      }
+    }
+
+    // Só devolve o status — nunca nome/telefone/CPF, mesmo essa função sendo
+    // pública, para não vazar dados pessoais do comprador.
+    return { status: data.status, used: !!data.used };
   }
-  const snap = await db.collection("tickets").doc(ticketId).get();
-  if (!snap.exists) {
-    throw new HttpsError("not-found", "Ingresso não encontrado.");
-  }
-  const data = snap.data();
-  // Só devolve o status — nunca nome/telefone/CPF, mesmo essa função sendo
-  // pública, para não vazar dados pessoais do comprador.
-  return { status: data.status, used: !!data.used };
-});
+);
 
 // ============================================================================
 // 4) WEBHOOK — o Mercado Pago chama essa URL quando o status de um pagamento
 //    muda (essencial para o Pix, que é confirmado de forma assíncrona).
 // ============================================================================
 exports.mercadoPagoWebhook = onRequest(
-  { region: REGION, secrets: [MP_ACCESS_TOKEN, MP_WEBHOOK_SECRET] },
+  { region: REGION, secrets: [MP_ACCESS_TOKEN, MP_WEBHOOK_SECRET, ...EMAIL_SECRETS] },
   async (req, res) => {
     try {
       const paymentId = req.query["data.id"] || req.body?.data?.id;
@@ -404,18 +562,9 @@ exports.mercadoPagoWebhook = onRequest(
         return;
       }
 
-      const status = mpPayment.status;
-      const updates = {
-        paymentId: String(mpPayment.id),
-        paymentStatus: status,
-        paymentStatusDetail: mpPayment.status_detail || null,
-      };
-      if (status === "approved") {
-        updates.status = "approved";
-      } else if (status === "rejected" || status === "cancelled") {
-        updates.status = "rejected";
-      }
-      await ticketRef.update(updates);
+      await finalizarStatusIngresso(
+        ticketRef, ticketSnap.data(), mpPayment.status, mpPayment.status_detail, mpPayment.id
+      );
 
       res.status(200).send("ok");
     } catch (e) {
